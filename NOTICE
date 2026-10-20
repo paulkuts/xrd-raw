@@ -1,0 +1,12 @@
+Данные эталонных дифрактограмм (tools/phases_db.json.gz) собраны из открытых
+источников и распространяются на условиях этих источников:
+
+  * COD (Crystallography Open Database) — CC0 1.0
+    https://www.crystallography.net/
+  * JARVIS-DFT (NIST) — CC BY 4.0
+    https://jarvis.nist.gov/
+
+Картотека PDF ICDD (PDF-2/PDF-4) в проекте НЕ используется: она распространяется
+по платной лицензии на одну машину с запретом передачи данных.
+
+Код (tools/, build/, .bat) распространяется по лицензии MIT — см. LICENSE.
