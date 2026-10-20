@@ -1,0 +1,310 @@
+{
+  "fixture": "wrongwl_co_as_cu",
+  "file": "wrongwl_co_as_cu.raw",
+  "kind": "synthetic",
+  "license": "MIT — создано в этом проекте; не является измерением",
+  "generator": "tests/fixtures/make_fixtures.py",
+  "created": "2026-10-20",
+  "seed": 20261026,
+  "two_theta": {
+    "start": 8.0,
+    "stop": 70.0,
+    "step": 0.02,
+    "points": 3101
+  },
+  "wavelength_A": 1.78901,
+  "anode_actual": "Co",
+  "anode_metadata": "Copper",
+  "shift_deg": 0.0,
+  "profile": {
+    "shape": "pseudo-Voigt",
+    "eta": 0.5,
+    "fwhm_deg": "0.090 + 0.0012 * 2theta"
+  },
+  "noise": {
+    "model": "gaussian_abs",
+    "sigma": 6.0
+  },
+  "background": {
+    "offset": 28.0,
+    "slope_per_deg": -0.05
+  },
+  "peaks_placed": [
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 4.257,
+      "rel": 22.0,
+      "two_theta": 24.259,
+      "height": 286.0
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 3.343,
+      "rel": 100.0,
+      "two_theta": 31.04,
+      "height": 1300.0
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 2.457,
+      "rel": 8.0,
+      "two_theta": 42.7,
+      "height": 104.0
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 2.282,
+      "rel": 8.0,
+      "two_theta": 46.156,
+      "height": 104.0
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 2.237,
+      "rel": 4.0,
+      "two_theta": 47.14,
+      "height": 52.0
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 2.127,
+      "rel": 6.0,
+      "two_theta": 49.738,
+      "height": 78.0
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 1.98,
+      "rel": 4.0,
+      "two_theta": 53.715,
+      "height": 52.0
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 1.818,
+      "rel": 14.0,
+      "two_theta": 58.948,
+      "height": 182.0
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 1.802,
+      "rel": 4.0,
+      "two_theta": 59.524,
+      "height": 52.0
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 1.671,
+      "rel": 5.0,
+      "two_theta": 64.73,
+      "height": 65.0
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 1.659,
+      "rel": 4.0,
+      "two_theta": 65.256,
+      "height": 52.0
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 1.608,
+      "rel": 2.0,
+      "two_theta": 67.598,
+      "height": 26.0
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 1.541,
+      "rel": 4.0,
+      "two_theta": 70.967,
+      "height": 52.0
+    },
+    {
+      "phase": "calcite (CaCO3)",
+      "d": 3.035,
+      "rel": 100.0,
+      "two_theta": 34.283,
+      "height": 1500.0
+    },
+    {
+      "phase": "calcite (CaCO3)",
+      "d": 2.495,
+      "rel": 14.0,
+      "two_theta": 42.019,
+      "height": 210.0
+    },
+    {
+      "phase": "calcite (CaCO3)",
+      "d": 2.285,
+      "rel": 18.0,
+      "two_theta": 46.092,
+      "height": 270.0
+    },
+    {
+      "phase": "calcite (CaCO3)",
+      "d": 2.095,
+      "rel": 17.0,
+      "two_theta": 50.551,
+      "height": 255.0
+    },
+    {
+      "phase": "calcite (CaCO3)",
+      "d": 1.927,
+      "rel": 8.0,
+      "two_theta": 55.316,
+      "height": 120.0
+    },
+    {
+      "phase": "calcite (CaCO3)",
+      "d": 1.875,
+      "rel": 17.0,
+      "two_theta": 56.988,
+      "height": 255.0
+    },
+    {
+      "phase": "calcite (CaCO3)",
+      "d": 1.604,
+      "rel": 8.0,
+      "two_theta": 67.79,
+      "height": 120.0
+    }
+  ],
+  "truth": {
+    "present": [
+      {
+        "key": "quartz",
+        "name": "quartz (alpha-SiO2)",
+        "formula": "SiO2",
+        "reference": "PDF 46-1045 (literature d/I set)",
+        "scale_counts": 1300.0,
+        "lines_in_range": [
+          {
+            "d": 4.257,
+            "I_percent": 22.0,
+            "two_theta": 24.259
+          },
+          {
+            "d": 3.343,
+            "I_percent": 100.0,
+            "two_theta": 31.04
+          },
+          {
+            "d": 2.457,
+            "I_percent": 8.0,
+            "two_theta": 42.7
+          },
+          {
+            "d": 2.282,
+            "I_percent": 8.0,
+            "two_theta": 46.156
+          },
+          {
+            "d": 2.237,
+            "I_percent": 4.0,
+            "two_theta": 47.14
+          },
+          {
+            "d": 2.127,
+            "I_percent": 6.0,
+            "two_theta": 49.738
+          },
+          {
+            "d": 1.98,
+            "I_percent": 4.0,
+            "two_theta": 53.715
+          },
+          {
+            "d": 1.818,
+            "I_percent": 14.0,
+            "two_theta": 58.948
+          },
+          {
+            "d": 1.802,
+            "I_percent": 4.0,
+            "two_theta": 59.524
+          },
+          {
+            "d": 1.671,
+            "I_percent": 5.0,
+            "two_theta": 64.73
+          },
+          {
+            "d": 1.659,
+            "I_percent": 4.0,
+            "two_theta": 65.256
+          },
+          {
+            "d": 1.608,
+            "I_percent": 2.0,
+            "two_theta": 67.598
+          }
+        ]
+      },
+      {
+        "key": "calcite",
+        "name": "calcite (CaCO3)",
+        "formula": "CaCO3",
+        "reference": "PDF 05-0586 (literature d/I set)",
+        "scale_counts": 1500.0,
+        "lines_in_range": [
+          {
+            "d": 3.035,
+            "I_percent": 100.0,
+            "two_theta": 34.283
+          },
+          {
+            "d": 2.495,
+            "I_percent": 14.0,
+            "two_theta": 42.019
+          },
+          {
+            "d": 2.285,
+            "I_percent": 18.0,
+            "two_theta": 46.092
+          },
+          {
+            "d": 2.095,
+            "I_percent": 17.0,
+            "two_theta": 50.551
+          },
+          {
+            "d": 1.927,
+            "I_percent": 8.0,
+            "two_theta": 55.316
+          },
+          {
+            "d": 1.875,
+            "I_percent": 17.0,
+            "two_theta": 56.988
+          },
+          {
+            "d": 1.604,
+            "I_percent": 8.0,
+            "two_theta": 67.79
+          }
+        ]
+      }
+    ],
+    "absent": [],
+    "expect_no_confident_candidate": true,
+    "wavelength_actual_A": 1.78901,
+    "anode_actual": "Co",
+    "anode_metadata": "Copper",
+    "note": "позиции посчитаны для Co Kα (1.78901 Å), а метаданные прибора говорят Copper: конвейер обязан либо требовать подтверждения излучения, либо давать неверный/пустой результат — это и фиксируется как ожидаемое поведение"
+  },
+  "bytes": 49750,
+  "composition": [
+    {
+      "name": "quartz (alpha-SiO2)",
+      "formula": "SiO2",
+      "source": "literature d/I"
+    },
+    {
+      "name": "calcite (CaCO3)",
+      "formula": "CaCO3",
+      "source": "literature d/I"
+    }
+  ]
+}

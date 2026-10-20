@@ -1,0 +1,504 @@
+{
+  "fixture": "mix_qcg",
+  "file": "mix_qcg.raw",
+  "kind": "synthetic",
+  "license": "MIT — создано в этом проекте; не является измерением",
+  "generator": "tests/fixtures/make_fixtures.py",
+  "created": "2026-10-20",
+  "seed": 20261021,
+  "two_theta": {
+    "start": 5.0,
+    "stop": 60.0,
+    "step": 0.02,
+    "points": 2751
+  },
+  "wavelength_A": 1.54184,
+  "anode_actual": "Cu",
+  "anode_metadata": "Copper",
+  "shift_deg": 0.0,
+  "profile": {
+    "shape": "pseudo-Voigt",
+    "eta": 0.5,
+    "fwhm_deg": "0.090 + 0.0012 * 2theta"
+  },
+  "noise": {
+    "model": "gaussian_abs",
+    "sigma": 8.0
+  },
+  "background": {
+    "offset": 30.0,
+    "slope_per_deg": -0.08
+  },
+  "peaks_placed": [
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 4.257,
+      "rel": 22.0,
+      "two_theta": 20.867,
+      "height": 198.0
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 3.343,
+      "rel": 100.0,
+      "two_theta": 26.666,
+      "height": 900.0
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 2.457,
+      "rel": 8.0,
+      "two_theta": 36.573,
+      "height": 72.0
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 2.282,
+      "rel": 8.0,
+      "two_theta": 39.489,
+      "height": 72.0
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 2.237,
+      "rel": 4.0,
+      "two_theta": 40.317,
+      "height": 36.0
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 2.127,
+      "rel": 6.0,
+      "two_theta": 42.501,
+      "height": 54.0
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 1.98,
+      "rel": 4.0,
+      "two_theta": 45.829,
+      "height": 36.0
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 1.818,
+      "rel": 14.0,
+      "two_theta": 50.181,
+      "height": 126.0
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 1.802,
+      "rel": 4.0,
+      "two_theta": 50.658,
+      "height": 36.0
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 1.671,
+      "rel": 5.0,
+      "two_theta": 54.949,
+      "height": 45.0
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 1.659,
+      "rel": 4.0,
+      "two_theta": 55.38,
+      "height": 36.0
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 1.608,
+      "rel": 2.0,
+      "two_theta": 57.296,
+      "height": 18.0
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 1.541,
+      "rel": 4.0,
+      "two_theta": 60.036,
+      "height": 36.0
+    },
+    {
+      "phase": "calcite (CaCO3)",
+      "d": 3.035,
+      "rel": 100.0,
+      "two_theta": 29.43,
+      "height": 1600.0
+    },
+    {
+      "phase": "calcite (CaCO3)",
+      "d": 2.495,
+      "rel": 14.0,
+      "two_theta": 35.996,
+      "height": 224.0
+    },
+    {
+      "phase": "calcite (CaCO3)",
+      "d": 2.285,
+      "rel": 18.0,
+      "two_theta": 39.435,
+      "height": 288.0
+    },
+    {
+      "phase": "calcite (CaCO3)",
+      "d": 2.095,
+      "rel": 17.0,
+      "two_theta": 43.182,
+      "height": 272.0
+    },
+    {
+      "phase": "calcite (CaCO3)",
+      "d": 1.927,
+      "rel": 8.0,
+      "two_theta": 47.164,
+      "height": 128.0
+    },
+    {
+      "phase": "calcite (CaCO3)",
+      "d": 1.875,
+      "rel": 17.0,
+      "two_theta": 48.555,
+      "height": 272.0
+    },
+    {
+      "phase": "calcite (CaCO3)",
+      "d": 1.604,
+      "rel": 8.0,
+      "two_theta": 57.452,
+      "height": 128.0
+    },
+    {
+      "phase": "calcite (CaCO3)",
+      "d": 1.525,
+      "rel": 6.0,
+      "two_theta": 60.732,
+      "height": 96.0
+    },
+    {
+      "phase": "gypsum (CaSO4*2H2O)",
+      "d": 7.63,
+      "rel": 100.0,
+      "two_theta": 11.598,
+      "height": 750.0
+    },
+    {
+      "phase": "gypsum (CaSO4*2H2O)",
+      "d": 4.28,
+      "rel": 60.0,
+      "two_theta": 20.754,
+      "height": 450.0
+    },
+    {
+      "phase": "gypsum (CaSO4*2H2O)",
+      "d": 3.8,
+      "rel": 25.0,
+      "two_theta": 23.41,
+      "height": 187.5
+    },
+    {
+      "phase": "gypsum (CaSO4*2H2O)",
+      "d": 3.06,
+      "rel": 90.0,
+      "two_theta": 29.184,
+      "height": 675.0
+    },
+    {
+      "phase": "gypsum (CaSO4*2H2O)",
+      "d": 2.87,
+      "rel": 25.0,
+      "two_theta": 31.164,
+      "height": 187.5
+    },
+    {
+      "phase": "gypsum (CaSO4*2H2O)",
+      "d": 2.69,
+      "rel": 15.0,
+      "two_theta": 33.308,
+      "height": 112.5
+    },
+    {
+      "phase": "gypsum (CaSO4*2H2O)",
+      "d": 2.6,
+      "rel": 10.0,
+      "two_theta": 34.496,
+      "height": 75.0
+    },
+    {
+      "phase": "gypsum (CaSO4*2H2O)",
+      "d": 2.5,
+      "rel": 8.0,
+      "two_theta": 35.922,
+      "height": 60.0
+    },
+    {
+      "phase": "gypsum (CaSO4*2H2O)",
+      "d": 2.44,
+      "rel": 6.0,
+      "two_theta": 36.836,
+      "height": 45.0
+    },
+    {
+      "phase": "gypsum (CaSO4*2H2O)",
+      "d": 2.32,
+      "rel": 8.0,
+      "two_theta": 38.816,
+      "height": 60.0
+    },
+    {
+      "phase": "gypsum (CaSO4*2H2O)",
+      "d": 2.22,
+      "rel": 10.0,
+      "two_theta": 40.64,
+      "height": 75.0
+    },
+    {
+      "phase": "gypsum (CaSO4*2H2O)",
+      "d": 2.13,
+      "rel": 6.0,
+      "two_theta": 42.438,
+      "height": 45.0
+    },
+    {
+      "phase": "gypsum (CaSO4*2H2O)",
+      "d": 2.07,
+      "rel": 10.0,
+      "two_theta": 43.731,
+      "height": 75.0
+    },
+    {
+      "phase": "gypsum (CaSO4*2H2O)",
+      "d": 1.9,
+      "rel": 8.0,
+      "two_theta": 47.876,
+      "height": 60.0
+    }
+  ],
+  "truth": {
+    "present": [
+      {
+        "key": "calcite",
+        "name": "calcite (CaCO3)",
+        "formula": "CaCO3",
+        "reference": "PDF 05-0586 (literature d/I set)",
+        "scale_counts": 1600.0,
+        "lines_in_range": [
+          {
+            "d": 3.035,
+            "I_percent": 100.0,
+            "two_theta": 29.43
+          },
+          {
+            "d": 2.495,
+            "I_percent": 14.0,
+            "two_theta": 35.996
+          },
+          {
+            "d": 2.285,
+            "I_percent": 18.0,
+            "two_theta": 39.435
+          },
+          {
+            "d": 2.095,
+            "I_percent": 17.0,
+            "two_theta": 43.182
+          },
+          {
+            "d": 1.927,
+            "I_percent": 8.0,
+            "two_theta": 47.164
+          },
+          {
+            "d": 1.875,
+            "I_percent": 17.0,
+            "two_theta": 48.555
+          },
+          {
+            "d": 1.604,
+            "I_percent": 8.0,
+            "two_theta": 57.452
+          }
+        ]
+      },
+      {
+        "key": "quartz",
+        "name": "quartz (alpha-SiO2)",
+        "formula": "SiO2",
+        "reference": "PDF 46-1045 (literature d/I set)",
+        "scale_counts": 900.0,
+        "lines_in_range": [
+          {
+            "d": 4.257,
+            "I_percent": 22.0,
+            "two_theta": 20.867
+          },
+          {
+            "d": 3.343,
+            "I_percent": 100.0,
+            "two_theta": 26.666
+          },
+          {
+            "d": 2.457,
+            "I_percent": 8.0,
+            "two_theta": 36.573
+          },
+          {
+            "d": 2.282,
+            "I_percent": 8.0,
+            "two_theta": 39.489
+          },
+          {
+            "d": 2.237,
+            "I_percent": 4.0,
+            "two_theta": 40.317
+          },
+          {
+            "d": 2.127,
+            "I_percent": 6.0,
+            "two_theta": 42.501
+          },
+          {
+            "d": 1.98,
+            "I_percent": 4.0,
+            "two_theta": 45.829
+          },
+          {
+            "d": 1.818,
+            "I_percent": 14.0,
+            "two_theta": 50.181
+          },
+          {
+            "d": 1.802,
+            "I_percent": 4.0,
+            "two_theta": 50.658
+          },
+          {
+            "d": 1.671,
+            "I_percent": 5.0,
+            "two_theta": 54.949
+          },
+          {
+            "d": 1.659,
+            "I_percent": 4.0,
+            "two_theta": 55.38
+          },
+          {
+            "d": 1.608,
+            "I_percent": 2.0,
+            "two_theta": 57.296
+          },
+          {
+            "d": 1.541,
+            "I_percent": 4.0,
+            "two_theta": 60.036
+          }
+        ]
+      },
+      {
+        "key": "gypsum",
+        "name": "gypsum (CaSO4*2H2O)",
+        "formula": "CaSO4*2H2O",
+        "reference": "PDF 33-0311 (literature d/I set)",
+        "scale_counts": 750.0,
+        "lines_in_range": [
+          {
+            "d": 7.63,
+            "I_percent": 100.0,
+            "two_theta": 11.598
+          },
+          {
+            "d": 4.28,
+            "I_percent": 60.0,
+            "two_theta": 20.754
+          },
+          {
+            "d": 3.8,
+            "I_percent": 25.0,
+            "two_theta": 23.41
+          },
+          {
+            "d": 3.06,
+            "I_percent": 90.0,
+            "two_theta": 29.184
+          },
+          {
+            "d": 2.87,
+            "I_percent": 25.0,
+            "two_theta": 31.164
+          },
+          {
+            "d": 2.69,
+            "I_percent": 15.0,
+            "two_theta": 33.308
+          },
+          {
+            "d": 2.6,
+            "I_percent": 10.0,
+            "two_theta": 34.496
+          },
+          {
+            "d": 2.5,
+            "I_percent": 8.0,
+            "two_theta": 35.922
+          },
+          {
+            "d": 2.44,
+            "I_percent": 6.0,
+            "two_theta": 36.836
+          },
+          {
+            "d": 2.32,
+            "I_percent": 8.0,
+            "two_theta": 38.816
+          },
+          {
+            "d": 2.22,
+            "I_percent": 10.0,
+            "two_theta": 40.64
+          },
+          {
+            "d": 2.13,
+            "I_percent": 6.0,
+            "two_theta": 42.438
+          },
+          {
+            "d": 2.07,
+            "I_percent": 10.0,
+            "two_theta": 43.731
+          },
+          {
+            "d": 1.9,
+            "I_percent": 8.0,
+            "two_theta": 47.876
+          }
+        ]
+      }
+    ],
+    "absent": [
+      "portlandite",
+      "ettringite"
+    ],
+    "expect_no_confident_candidate": false,
+    "ranking_note": "кальцит сильнейший по I, но FOM зависит от покрытия; проверяется состав множества и отсутствие мусора"
+  },
+  "bytes": 44141,
+  "composition": [
+    {
+      "name": "calcite (CaCO3)",
+      "formula": "CaCO3",
+      "source": "literature d/I"
+    },
+    {
+      "name": "quartz (alpha-SiO2)",
+      "formula": "SiO2",
+      "source": "literature d/I"
+    },
+    {
+      "name": "gypsum (CaSO4*2H2O)",
+      "formula": "CaSO4*2H2O",
+      "source": "literature d/I"
+    }
+  ]
+}

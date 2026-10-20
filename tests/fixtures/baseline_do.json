@@ -1,0 +1,568 @@
+{
+  "snapshot": "DO",
+  "snapshot_note": "Снимок текущего кода ветки feat/agent-D ДО интеграции веток A (phases), B (parser/peaks), C (export). Финальное «ПОСЛЕ» заполняет ведущий после слияния.",
+  "produced_by": "/root/work/.venv/bin/python tests/benchmark_xrd.py --out tmp/bench.json",
+  "generated_by": "tests/benchmark_xrd.py",
+  "synthetic_only": true,
+  "warnings": [
+    "noise_only: 120 пиков — упор в max_peaks (шум)"
+  ],
+  "code_state_note": "Снимок текущего кода ветки feat/agent-D. Ветки A (phases), B (parser/peaks), C (export) правятся параллельно: числа «ДО» относятся к состоянию до их интеграции. Финальное «ПОСЛЕ» заполняет ведущий после слияния.",
+  "database": {
+    "phases": 32491,
+    "sources": "COD (crystallography.net, CC0) - experimental CIF; JARVIS-DFT (NIST, CC BY 4.0) - DFT structures with ICSD reference",
+    "wavelength": "CuKa 1.5418 A"
+  },
+  "settings": {
+    "tol_deg": 0.25,
+    "peak_match_deg": 0.2,
+    "min_fom": 55.0,
+    "min_line_intensity": 3.0
+  },
+  "fixtures": [
+    {
+      "fixture": "quartz_pure",
+      "range": [
+        5.0,
+        60.0
+      ],
+      "points": 2751,
+      "phases_true": [
+        "quartz"
+      ],
+      "phases_found": [
+        "quartz"
+      ],
+      "phases_found_rank_fom": {
+        "quartz": 89.5
+      },
+      "true_phases": 1,
+      "found_true": 1,
+      "recall": 1.0,
+      "candidates": 1,
+      "false_candidates": 0,
+      "false_candidate_list": [],
+      "precision": 1.0,
+      "peaks": 12,
+      "n_obs": 11,
+      "true_lines": 12,
+      "lines_detected": 11,
+      "line_recall": 0.9166666666666666,
+      "spurious_peaks": 1,
+      "spurious_positions": [
+        57.33
+      ],
+      "unexplained": 3,
+      "t_parse_s": 0.01,
+      "t_pick_s": 0.008,
+      "t_explain_s": 1.62,
+      "expect_no_confident_candidate": false
+    },
+    {
+      "fixture": "mix_qcg",
+      "range": [
+        5.0,
+        60.0
+      ],
+      "points": 2751,
+      "phases_true": [
+        "calcite",
+        "quartz",
+        "gypsum"
+      ],
+      "phases_found": [],
+      "phases_found_rank_fom": {},
+      "true_phases": 3,
+      "found_true": 0,
+      "recall": 0.0,
+      "candidates": 5,
+      "false_candidates": 5,
+      "false_candidate_list": [
+        {
+          "name": "P-1 [ICSD 21067]",
+          "formula": "V2CuO6",
+          "fom": 64.0,
+          "src": "JARVIS-DFT"
+        },
+        {
+          "name": "Cs3O",
+          "formula": "Cs3O",
+          "fom": 58.3,
+          "src": "COD"
+        },
+        {
+          "name": "Tm3(GePd)4",
+          "formula": "Tm3(GePd)4",
+          "fom": 65.8,
+          "src": "COD"
+        },
+        {
+          "name": "Ti2CS",
+          "formula": "Ti2CS",
+          "fom": 60.6,
+          "src": "COD"
+        },
+        {
+          "name": "Y4Mn(GaGe)6",
+          "formula": "Y4Mn(GaGe)6",
+          "fom": 72.0,
+          "src": "COD"
+        }
+      ],
+      "precision": 0.0,
+      "peaks": 26,
+      "n_obs": 23,
+      "true_lines": 33,
+      "lines_detected": 30,
+      "line_recall": 0.9090909090909091,
+      "spurious_peaks": 0,
+      "spurious_positions": [],
+      "unexplained": 3,
+      "t_parse_s": 0.009,
+      "t_pick_s": 0.007,
+      "t_explain_s": 3.76,
+      "expect_no_confident_candidate": false
+    },
+    {
+      "fixture": "overlap_calcite_gypsum",
+      "range": [
+        8.0,
+        60.0
+      ],
+      "points": 2601,
+      "phases_true": [
+        "calcite",
+        "gypsum"
+      ],
+      "phases_found": [
+        "calcite",
+        "gypsum"
+      ],
+      "phases_found_rank_fom": {
+        "calcite": 83.3,
+        "gypsum": 84.7
+      },
+      "true_phases": 2,
+      "found_true": 2,
+      "recall": 1.0,
+      "candidates": 3,
+      "false_candidates": 1,
+      "false_candidate_list": [
+        {
+          "name": "Ca3(BN2)2",
+          "formula": "Ca3(BN2)2",
+          "fom": 67.7,
+          "src": "COD"
+        }
+      ],
+      "precision": 0.6666666666666666,
+      "peaks": 20,
+      "n_obs": 20,
+      "true_lines": 21,
+      "lines_detected": 21,
+      "line_recall": 1.0,
+      "spurious_peaks": 0,
+      "spurious_positions": [],
+      "unexplained": 0,
+      "t_parse_s": 0.008,
+      "t_pick_s": 0.008,
+      "t_explain_s": 1.99,
+      "expect_no_confident_candidate": false
+    },
+    {
+      "fixture": "noise_slope",
+      "range": [
+        5.0,
+        60.0
+      ],
+      "points": 2751,
+      "phases_true": [
+        "quartz"
+      ],
+      "phases_found": [],
+      "phases_found_rank_fom": {},
+      "true_phases": 1,
+      "found_true": 0,
+      "recall": 0.0,
+      "candidates": 3,
+      "false_candidates": 3,
+      "false_candidate_list": [
+        {
+          "name": "BeF2",
+          "formula": "BeF2",
+          "fom": 70.7,
+          "src": "COD"
+        },
+        {
+          "name": "PdS",
+          "formula": "PdS",
+          "fom": 55.0,
+          "src": "COD"
+        },
+        {
+          "name": "Er2SnAu2",
+          "formula": "Er2SnAu2",
+          "fom": 55.8,
+          "src": "COD"
+        }
+      ],
+      "precision": 0.0,
+      "peaks": 27,
+      "n_obs": 27,
+      "true_lines": 12,
+      "lines_detected": 9,
+      "line_recall": 0.75,
+      "spurious_peaks": 18,
+      "spurious_positions": [
+        16.49,
+        18.6,
+        19.82,
+        23.28,
+        29.07,
+        29.95,
+        35.19,
+        38.57,
+        41.44,
+        44.37,
+        48.3,
+        48.78,
+        52.17,
+        52.69,
+        53.74
+      ],
+      "unexplained": 9,
+      "t_parse_s": 0.008,
+      "t_pick_s": 0.052,
+      "t_explain_s": 3.39,
+      "expect_no_confident_candidate": false
+    },
+    {
+      "fixture": "shift_plus010",
+      "range": [
+        10.0,
+        60.0
+      ],
+      "points": 2501,
+      "phases_true": [
+        "calcite",
+        "quartz"
+      ],
+      "phases_found": [],
+      "phases_found_rank_fom": {},
+      "true_phases": 2,
+      "found_true": 0,
+      "recall": 0.0,
+      "candidates": 4,
+      "false_candidates": 4,
+      "false_candidate_list": [
+        {
+          "name": "Y3FeB7",
+          "formula": "Y3FeB7",
+          "fom": 65.3,
+          "src": "COD"
+        },
+        {
+          "name": "Nd2Mn3Cu9P7",
+          "formula": "Nd2Mn3Cu9P7",
+          "fom": 56.0,
+          "src": "COD"
+        },
+        {
+          "name": "P6_3mc [ICSD 190121]",
+          "formula": "HfCuSn",
+          "fom": 57.0,
+          "src": "JARVIS-DFT"
+        },
+        {
+          "name": "Na2LiN",
+          "formula": "Na2LiN",
+          "fom": 58.3,
+          "src": "COD"
+        }
+      ],
+      "precision": 0.0,
+      "peaks": 17,
+      "n_obs": 17,
+      "true_lines": 19,
+      "lines_detected": 18,
+      "line_recall": 0.9473684210526315,
+      "spurious_peaks": 0,
+      "spurious_positions": [],
+      "unexplained": 1,
+      "t_parse_s": 0.007,
+      "t_pick_s": 0.006,
+      "t_explain_s": 2.56,
+      "expect_no_confident_candidate": false
+    },
+    {
+      "fixture": "narrow_20_35",
+      "range": [
+        20.0,
+        35.0
+      ],
+      "points": 751,
+      "phases_true": [
+        "gypsum",
+        "portlandite"
+      ],
+      "phases_found": [],
+      "phases_found_rank_fom": {},
+      "true_phases": 2,
+      "found_true": 0,
+      "recall": 0.0,
+      "candidates": 2,
+      "false_candidates": 2,
+      "false_candidate_list": [
+        {
+          "name": "Sr6Mg23",
+          "formula": "Sr6Mg23",
+          "fom": 70.6,
+          "src": "COD"
+        },
+        {
+          "name": "YbFeO3",
+          "formula": "YbFeO3",
+          "fom": 71.5,
+          "src": "COD"
+        }
+      ],
+      "precision": 0.0,
+      "peaks": 7,
+      "n_obs": 7,
+      "true_lines": 7,
+      "lines_detected": 7,
+      "line_recall": 1.0,
+      "spurious_peaks": 0,
+      "spurious_positions": [],
+      "unexplained": 0,
+      "t_parse_s": 0.003,
+      "t_pick_s": 0.002,
+      "t_explain_s": 1.06,
+      "expect_no_confident_candidate": false
+    },
+    {
+      "fixture": "wrongwl_co_as_cu",
+      "range": [
+        8.0,
+        70.0
+      ],
+      "points": 3101,
+      "phases_true": [
+        "quartz",
+        "calcite"
+      ],
+      "phases_found": [],
+      "phases_found_rank_fom": {},
+      "true_phases": 2,
+      "found_true": 0,
+      "recall": 0.0,
+      "candidates": 2,
+      "false_candidates": 2,
+      "false_candidate_list": [
+        {
+          "name": "DyGe3",
+          "formula": "DyGe3",
+          "fom": 70.2,
+          "src": "COD"
+        },
+        {
+          "name": "C3O",
+          "formula": "C3O",
+          "fom": 68.3,
+          "src": "COD"
+        }
+      ],
+      "precision": 0.0,
+      "peaks": 17,
+      "n_obs": 17,
+      "true_lines": 18,
+      "lines_detected": 18,
+      "line_recall": 1.0,
+      "spurious_peaks": 0,
+      "spurious_positions": [],
+      "unexplained": 9,
+      "t_parse_s": 0.01,
+      "t_pick_s": 0.008,
+      "t_explain_s": 1.9,
+      "expect_no_confident_candidate": true
+    },
+    {
+      "fixture": "noise_only",
+      "range": [
+        5.0,
+        60.0
+      ],
+      "points": 2751,
+      "phases_true": [],
+      "phases_found": [],
+      "phases_found_rank_fom": {},
+      "true_phases": 0,
+      "found_true": 0,
+      "recall": null,
+      "candidates": 0,
+      "false_candidates": 0,
+      "false_candidate_list": [],
+      "precision": null,
+      "peaks": 120,
+      "n_obs": 120,
+      "true_lines": 0,
+      "lines_detected": 0,
+      "line_recall": null,
+      "spurious_peaks": 120,
+      "spurious_positions": [
+        5.02,
+        5.44,
+        5.96,
+        6.16,
+        7.88,
+        8.52,
+        8.76,
+        9.07,
+        9.43,
+        9.97,
+        10.3,
+        10.46,
+        10.59,
+        10.83,
+        10.95
+      ],
+      "unexplained": 120,
+      "t_parse_s": 0.01,
+      "t_pick_s": 0.01,
+      "t_explain_s": 13.17,
+      "expect_no_confident_candidate": true
+    },
+    {
+      "fixture": "dft_weak",
+      "range": [
+        15.0,
+        60.0
+      ],
+      "points": 2251,
+      "phases_true": [
+        "dft"
+      ],
+      "phases_found": [],
+      "phases_found_rank_fom": {},
+      "true_phases": 1,
+      "found_true": 0,
+      "recall": 0.0,
+      "candidates": 2,
+      "false_candidates": 2,
+      "false_candidate_list": [
+        {
+          "name": "K3BiSe3",
+          "formula": "K3BiSe3",
+          "fom": 76.4,
+          "src": "COD"
+        },
+        {
+          "name": "Bi2SeO2",
+          "formula": "Bi2SeO2",
+          "fom": 67.3,
+          "src": "COD"
+        }
+      ],
+      "precision": 0.0,
+      "peaks": 51,
+      "n_obs": 17,
+      "true_lines": 12,
+      "lines_detected": 4,
+      "line_recall": 0.3333333333333333,
+      "spurious_peaks": 47,
+      "spurious_positions": [
+        15.19,
+        15.94,
+        17.06,
+        18.32,
+        18.9,
+        19.94,
+        20.64,
+        21.22,
+        22.1,
+        22.8,
+        23.42,
+        23.79,
+        24.5,
+        26.06,
+        27.28
+      ],
+      "unexplained": 15,
+      "t_parse_s": 0.015,
+      "t_pick_s": 0.033,
+      "t_explain_s": 3.25,
+      "expect_no_confident_candidate": true
+    }
+  ],
+  "totals": {
+    "fixtures": 9,
+    "true_phases": 14,
+    "found_true": 3,
+    "recall": 0.214,
+    "candidates": 22,
+    "false_candidates": 19,
+    "precision": 0.136,
+    "true_lines": 134,
+    "lines_detected": 118,
+    "line_recall": 0.881,
+    "spurious_peaks": 186,
+    "unexplained": 160,
+    "runtime_s": 32.91
+  },
+  "real_sample_baseline": {
+    "file": "/root/work/samples/261007115241.raw (только чтение, копия в tempfile)",
+    "points": 2600,
+    "range": [
+      4.02,
+      56.0
+    ],
+    "step": 0.02,
+    "anode": "Copper",
+    "max_counts": 173,
+    "median_counts": 16,
+    "peaks_peakpick": 120,
+    "phases_min_fom_55": 0,
+    "phases_min_fom_40": 0,
+    "phases_min_fom_20": 0,
+    "estimate_shift": 0.0,
+    "estimate_shift_gain": 0.0,
+    "estimate_shift_seconds": 81.6,
+    "explain_seconds": {
+      "min_fom_55": 6.3,
+      "min_fom_40": 14.4,
+      "min_fom_20": 5.2
+    },
+    "top_peaks": [
+      [
+        29.39,
+        100
+      ],
+      [
+        32.22,
+        45
+      ],
+      [
+        26.66,
+        34
+      ],
+      [
+        34.37,
+        32
+      ],
+      [
+        32.6,
+        31
+      ],
+      [
+        18.07,
+        24
+      ]
+    ],
+    "expected_by_reference_lines": [
+      "calcite ~29.4",
+      "quartz 26.66",
+      "portlandite 18.07 и ~34.1"
+    ],
+    "conclusion": "слабый сигнал: 120 пиков шума (упор в max_peaks), 0 фаз при любом пороге, сдвиг не обнаружен"
+  }
+}

@@ -1,0 +1,218 @@
+{
+  "fixture": "noise_slope",
+  "file": "noise_slope.raw",
+  "kind": "synthetic",
+  "license": "MIT — создано в этом проекте; не является измерением",
+  "generator": "tests/fixtures/make_fixtures.py",
+  "created": "2026-10-20",
+  "seed": 20261023,
+  "two_theta": {
+    "start": 5.0,
+    "stop": 60.0,
+    "step": 0.02,
+    "points": 2751
+  },
+  "wavelength_A": 1.54184,
+  "anode_actual": "Cu",
+  "anode_metadata": "Copper",
+  "shift_deg": 0.0,
+  "profile": {
+    "shape": "pseudo-Voigt",
+    "eta": 0.5,
+    "fwhm_deg": "0.090 + 0.0012 * 2theta"
+  },
+  "noise": {
+    "model": "gaussian_abs",
+    "sigma": 10.0
+  },
+  "background": {
+    "offset": 60.0,
+    "exp_amp": 1100.0,
+    "exp_decay": 0.055
+  },
+  "peaks_placed": [
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 4.257,
+      "rel": 22.0,
+      "two_theta": 20.867,
+      "height": 57.2
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 3.343,
+      "rel": 100.0,
+      "two_theta": 26.666,
+      "height": 260.0
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 2.457,
+      "rel": 8.0,
+      "two_theta": 36.573,
+      "height": 20.8
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 2.282,
+      "rel": 8.0,
+      "two_theta": 39.489,
+      "height": 20.8
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 2.237,
+      "rel": 4.0,
+      "two_theta": 40.317,
+      "height": 10.4
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 2.127,
+      "rel": 6.0,
+      "two_theta": 42.501,
+      "height": 15.6
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 1.98,
+      "rel": 4.0,
+      "two_theta": 45.829,
+      "height": 10.4
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 1.818,
+      "rel": 14.0,
+      "two_theta": 50.181,
+      "height": 36.4
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 1.802,
+      "rel": 4.0,
+      "two_theta": 50.658,
+      "height": 10.4
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 1.671,
+      "rel": 5.0,
+      "two_theta": 54.949,
+      "height": 13.0
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 1.659,
+      "rel": 4.0,
+      "two_theta": 55.38,
+      "height": 10.4
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 1.608,
+      "rel": 2.0,
+      "two_theta": 57.296,
+      "height": 5.2
+    },
+    {
+      "phase": "quartz (alpha-SiO2)",
+      "d": 1.541,
+      "rel": 4.0,
+      "two_theta": 60.036,
+      "height": 10.4
+    }
+  ],
+  "truth": {
+    "present": [
+      {
+        "key": "quartz",
+        "name": "quartz (alpha-SiO2)",
+        "formula": "SiO2",
+        "reference": "PDF 46-1045 (literature d/I set)",
+        "scale_counts": 260.0,
+        "lines_in_range": [
+          {
+            "d": 4.257,
+            "I_percent": 22.0,
+            "two_theta": 20.867
+          },
+          {
+            "d": 3.343,
+            "I_percent": 100.0,
+            "two_theta": 26.666
+          },
+          {
+            "d": 2.457,
+            "I_percent": 8.0,
+            "two_theta": 36.573
+          },
+          {
+            "d": 2.282,
+            "I_percent": 8.0,
+            "two_theta": 39.489
+          },
+          {
+            "d": 2.237,
+            "I_percent": 4.0,
+            "two_theta": 40.317
+          },
+          {
+            "d": 2.127,
+            "I_percent": 6.0,
+            "two_theta": 42.501
+          },
+          {
+            "d": 1.98,
+            "I_percent": 4.0,
+            "two_theta": 45.829
+          },
+          {
+            "d": 1.818,
+            "I_percent": 14.0,
+            "two_theta": 50.181
+          },
+          {
+            "d": 1.802,
+            "I_percent": 4.0,
+            "two_theta": 50.658
+          },
+          {
+            "d": 1.671,
+            "I_percent": 5.0,
+            "two_theta": 54.949
+          },
+          {
+            "d": 1.659,
+            "I_percent": 4.0,
+            "two_theta": 55.38
+          },
+          {
+            "d": 1.608,
+            "I_percent": 2.0,
+            "two_theta": 57.296
+          },
+          {
+            "d": 1.541,
+            "I_percent": 4.0,
+            "two_theta": 60.036
+          }
+        ]
+      }
+    ],
+    "absent": [
+      "calcite",
+      "gypsum"
+    ],
+    "expect_no_confident_candidate": false,
+    "note": "фон 1160 -> 60 имп., сигнал кварца 260 имп. при 3.343 Å"
+  },
+  "bytes": 44145,
+  "composition": [
+    {
+      "name": "quartz (alpha-SiO2)",
+      "formula": "SiO2",
+      "source": "literature d/I"
+    }
+  ]
+}

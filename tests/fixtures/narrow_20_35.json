@@ -1,0 +1,188 @@
+{
+  "fixture": "narrow_20_35",
+  "file": "narrow_20_35.raw",
+  "kind": "synthetic",
+  "license": "MIT — создано в этом проекте; не является измерением",
+  "generator": "tests/fixtures/make_fixtures.py",
+  "created": "2026-10-20",
+  "seed": 20261025,
+  "two_theta": {
+    "start": 20.0,
+    "stop": 35.0,
+    "step": 0.02,
+    "points": 751
+  },
+  "wavelength_A": 1.54184,
+  "anode_actual": "Cu",
+  "anode_metadata": "Copper",
+  "shift_deg": 0.0,
+  "profile": {
+    "shape": "pseudo-Voigt",
+    "eta": 0.5,
+    "fwhm_deg": "0.090 + 0.0012 * 2theta"
+  },
+  "noise": {
+    "model": "gaussian_abs",
+    "sigma": 5.0
+  },
+  "background": {
+    "offset": 25.0,
+    "slope_per_deg": 0.0
+  },
+  "peaks_placed": [
+    {
+      "phase": "gypsum (CaSO4*2H2O)",
+      "d": 4.28,
+      "rel": 60.0,
+      "two_theta": 20.754,
+      "height": 720.0
+    },
+    {
+      "phase": "gypsum (CaSO4*2H2O)",
+      "d": 3.8,
+      "rel": 25.0,
+      "two_theta": 23.41,
+      "height": 300.0
+    },
+    {
+      "phase": "gypsum (CaSO4*2H2O)",
+      "d": 3.06,
+      "rel": 90.0,
+      "two_theta": 29.184,
+      "height": 1080.0
+    },
+    {
+      "phase": "gypsum (CaSO4*2H2O)",
+      "d": 2.87,
+      "rel": 25.0,
+      "two_theta": 31.164,
+      "height": 300.0
+    },
+    {
+      "phase": "gypsum (CaSO4*2H2O)",
+      "d": 2.69,
+      "rel": 15.0,
+      "two_theta": 33.308,
+      "height": 180.0
+    },
+    {
+      "phase": "gypsum (CaSO4*2H2O)",
+      "d": 2.6,
+      "rel": 10.0,
+      "two_theta": 34.496,
+      "height": 120.0
+    },
+    {
+      "phase": "gypsum (CaSO4*2H2O)",
+      "d": 2.5,
+      "rel": 8.0,
+      "two_theta": 35.922,
+      "height": 96.0
+    },
+    {
+      "phase": "portlandite (Ca(OH)2)",
+      "d": 2.628,
+      "rel": 100.0,
+      "two_theta": 34.117,
+      "height": 1200.0
+    }
+  ],
+  "truth": {
+    "present": [
+      {
+        "key": "gypsum",
+        "name": "gypsum (CaSO4*2H2O)",
+        "formula": "CaSO4*2H2O",
+        "reference": "PDF 33-0311 (literature d/I set)",
+        "scale_counts": 1200.0,
+        "lines_in_range": [
+          {
+            "d": 4.28,
+            "I_percent": 60.0,
+            "two_theta": 20.754
+          },
+          {
+            "d": 3.8,
+            "I_percent": 25.0,
+            "two_theta": 23.41
+          },
+          {
+            "d": 3.06,
+            "I_percent": 90.0,
+            "two_theta": 29.184
+          },
+          {
+            "d": 2.87,
+            "I_percent": 25.0,
+            "two_theta": 31.164
+          },
+          {
+            "d": 2.69,
+            "I_percent": 15.0,
+            "two_theta": 33.308
+          },
+          {
+            "d": 2.6,
+            "I_percent": 10.0,
+            "two_theta": 34.496
+          }
+        ]
+      },
+      {
+        "key": "portlandite",
+        "name": "portlandite (Ca(OH)2)",
+        "formula": "Ca(OH)2",
+        "reference": "PDF 44-1481 (literature d/I set); strongest line 2.63 A",
+        "scale_counts": 1200.0,
+        "lines_in_range": [
+          {
+            "d": 2.628,
+            "I_percent": 100.0,
+            "two_theta": 34.117
+          }
+        ]
+      }
+    ],
+    "absent": [
+      "quartz",
+      "calcite"
+    ],
+    "expect_no_confident_candidate": false,
+    "out_of_range_strong_lines": {
+      "gypsum": [
+        {
+          "d": 7.63,
+          "I_percent": 100.0
+        },
+        {
+          "d": 4.28,
+          "I_percent": 60.0
+        }
+      ],
+      "portlandite": [
+        {
+          "d": 4.9,
+          "I_percent": 74.0
+        },
+        {
+          "d": 1.927,
+          "I_percent": 41.0
+        }
+      ]
+    },
+    "note": "портландит имеет в диапазоне единственную линию 2.628 Å (100%)"
+  },
+  "bytes": 12146,
+  "composition": [
+    {
+      "name": "gypsum (CaSO4*2H2O)",
+      "formula": "CaSO4*2H2O",
+      "source": "literature d/I"
+    },
+    {
+      "name": "portlandite (Ca(OH)2)",
+      "formula": "Ca(OH)2",
+      "source": "literature d/I"
+    }
+  ]
+}
