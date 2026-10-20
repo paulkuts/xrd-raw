@@ -1,0 +1,15 @@
+# портативный Python-бандл (109 МБ) — не хранить в git, собирается отдельно
+python/
+
+# служебное и рабочее
+__pycache__/
+*.pyc
+tmp/
+venv/
+build/venv/
+build/cod_cifs.tar.gz
+build/*.log
+
+# пользовательские образцы и результаты
+input/*
+!input/.gitkeep
