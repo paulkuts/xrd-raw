@@ -68,11 +68,19 @@ MAX_PHASES = 8              # сколько фаз максимум объяс�
 DFT_PENALTY = 8.0           # штраф фазам из DFT-базы (нет экспериментального эталона)
 MAX_REF_LINES = 12          # сколько сильнейших рефлексов эталона берём в расчёт
 STRONG_REF_INT = 40.0       # «сильная» линия эталона, % — за пропуск штрафуем
-MISS_PENALTY_PER_PCT = 0.15  # штраф за каждую пропущенную сильную линию
+MISS_PENALTY_PER_PCT = 0.30  # штраф за каждую пропущенную сильную линию
 MAX_MISS_PENALTY = 25.0     # потолок штрафа за пропущенные линии
 SINGLE_LINE_CAP = 40.0      # потолок FOM, если совпала ровно одна линия
-CHANCE_PENALTY_SCALE = 15.0  # штраф за log10(ожидаемого числа ложных фаз)
-MAX_CHANCE_PENALTY = 40.0   # потолок этого штрафа
+INT_LIMIT_LOG = 0.477       # log10(3): среднее расхождение относительных интенсивностей
+                            # в 3 раза — противоречие картине, а не подтверждение
+INT_FLOOR = 0.55            # минимум множителя интенсивностей (полное расхождение)
+WEAK_ANCHOR = 0.15          # сильный необъяснённый пик (доля от макс.), для которого
+                            # сообщаем фазу «недостаточно данных»
+MAX_WEAK_REPORTED = 2       # сколько таких фаз максимум дописываем в результат
+SAME_PATTERN_TOL = 0.30     # две карточки с совпадающими линиями — одна фаза
+SAME_PATTERN_FRAC = 0.75
+CHANCE_PENALTY_SCALE = 10.0  # штраф за log10(ожидаемого числа ложных фаз)
+MAX_CHANCE_PENALTY = 20.0   # потолок этого штрафа
 DIAG_REL_INT = 10.0         # линия диагностична при I >= 10 % от сильнейшей в диапазоне
 DIAG_MIN_INT = 5.0          # ... и не слабее 5 %
 MAX_PER_FORMULA = 2         # не больше двух карточек одной формулы в результате
@@ -86,7 +94,7 @@ SHIFT_TOP_PHASES = 100      # второй проход оценки сдвиг�
 SHIFT_MIN_COHERENCE = 0.75  # доля совпавшего веса в одном бине, чтобы доверять фазе
 SHIFT_MIN_MATCH = 0.25      # минимум совпавшего веса (сильная линия ~1.0)
 SHIFT_MIN_Z = 3.5           # значимость пика гистограммы над фоном (в сигмах)
-SHIFT_MIN_VOTES = 1.5       # минимум «фаз-голосов» в лучшем бине
+SHIFT_MIN_VOTES = 1.0       # минимум «фаз-голосов» в лучшем бине
 SHIFT_MAX_CHANCE = 0.6     # при такой доле случайных совпадений сдвиг не оцениваем
 SHIFT_MIN_LINES = 3         # минимум сильных линий в диапазоне, чтобы фазе доверять
 SHIFT_MIN_REF_INT = 5.0     # линия участвует в голосовании по сдвигу при I >= 5 %
@@ -95,8 +103,10 @@ RI_LIMIT = 128              # кодирование (phase_index, ref_index) в
 CACHE = {}
 
 _FLAGS_TEXT = {
-    "FEW_DIAGNOSTIC_LINES": "недостаточно данных: < 2 диагностических линий в диапазоне",
+    "FEW_DIAGNOSTIC_LINES": "недостаточно данных: меньше 2 диагностических линий подтверждено",
     "SINGLE_LINE_MATCH": "совпала одна линия — совпадение может быть случайным",
+    "INTENSITY_CONFLICT": "относительные интенсивности противоречат эталону — скорее всего "
+                          "другая фаза или сильная текстура",
     "NO_STRONG_LINE": "не совпала ни одна сильная линия эталона",
     "RANGE_LIMITED": "диапазон съёмки уже эталона — часть линий вне измерения",
     "LOW_SHARE": "малая доля объяснённой интенсивности образца",
@@ -342,8 +352,16 @@ def _score_phase(ph, obs_peaks, tol=TOL_DEFAULT, allowed_obs=None,
     n_out = n_ref_total - len(in_range)
     if not in_range:
         return None
-    in_range.sort(key=lambda r: (-r[1], r[0]))
-    refs = in_range[:max(1, int(max_ref_lines))]
+    # Слабые линии карточки (< DIAG_MIN_INT %) не диагностичны: в плотной базе они
+    # «находятся» у чужого образца случайно, а их вес раздувает покрытие. Берём в
+    # расчёт только диагностичные линии; если таких меньше двух — отступаем к
+    # сильнейшим в диапазоне (фаза всё равно получит FEW_DIAGNOSTIC_LINES).
+    diag = [r for r in in_range if r[1] >= DIAG_MIN_INT]
+    if len(diag) < 2:
+        diag = in_range
+    n_diag = len(diag)
+    diag.sort(key=lambda r: (-r[1], r[0]))
+    refs = diag[:max(1, int(max_ref_lines))]
 
     if obs_index is None:
         obs_index = _obs_index(obs_peaks)
@@ -384,7 +402,31 @@ def _score_phase(ph, obs_peaks, tol=TOL_DEFAULT, allowed_obs=None,
 
     imax_in = max(rint for _pos, rint, _ri in in_range) or 1.0
     diag_level = max(DIAG_MIN_INT, DIAG_REL_INT / 100.0 * imax_in)
-    n_diag = sum(1 for _pos, rint, _ri in in_range if rint >= diag_level)
+    diag_ids = {ri for _pos, rint, ri in in_range if rint >= diag_level}
+    n_diag = len(diag_ids)
+    # Подтверждено диагностических линий — именно это, а не «сколько их в
+    # диапазоне вообще», говорит, на чём держится идентификация. Фаза, у которой
+    # совпала одна сильная линия (или одна и две слабые), — «недостаточно данных».
+    n_diag_hit = len(diag_ids & matched_ri)
+
+    # ---- согласие относительных интенсивностей ------------------------------
+    # Позиции совпали — это ещё половина дела: у фазы должна совпадать и
+    # картина интенсивностей. Сравниваем отношения I_эталона/I_наблюдения,
+    # нормируя на медиану (масштаб фазы в смеси неизвестен), и считаем среднее
+    # |log10| отклонение. Расхождение в 3 раза и больше — уже не подтверждение.
+    q = []
+    imax_obs_all = max(max(float(p["intensity"]), 0.5) for p in obs_peaks) or 1.0
+    for ri, oi, _d in matched:
+        r_rel = max(ref_int[ri], 0.5) / imax_in
+        o_rel = max(float(obs_peaks[oi]["intensity"]), 0.5) / imax_obs_all
+        if r_rel > 0 and o_rel > 0:
+            q.append(r_rel / o_rel)
+    if len(q) >= 2:
+        scale = sorted(q)[len(q) // 2] or 1.0
+        int_dev = sum(abs(math.log10(max(v / scale, 1e-6))) for v in q) / len(q)
+    else:
+        int_dev = 0.0
+    int_agr = max(0.0, 1.0 - int_dev / INT_LIMIT_LOG)
 
     # ---- поправка на случайные совпадения -----------------------------------
     # Если пиков много (шумовой спектр), любая эталонная линия «найдёт» пик в
@@ -411,14 +453,23 @@ def _score_phase(ph, obs_peaks, tol=TOL_DEFAULT, allowed_obs=None,
     obs_term = min(1.0, obs_strong / 0.5)
 
     pos_score = max(0.0, 1.0 - mean_dtheta / tol) ** 2 if tol > 0 else 1.0
-    fom_raw = (45.0 * cov_excess
+    # Покрытие по 2-3 линиям — не покрытие: 2 из 2 совпадений даёт любая редкая
+    # карточка. Вес покрытия растёт с числом подтверждённых линий.
+    cov_evidence = cov_excess * min(1.0, len(matched) / 4.0)
+    fom_raw = (45.0 * cov_evidence
                + 15.0 * (key_hits / float(len(key_idx)))
                + 25.0 * pos_score
                + 15.0 * obs_term)
+    # Интенсивности — второй, независимый признак фазы: если картина
+    # относительных интенсивностей противоречит наблюдению, FOM не может
+    # оставаться высоким, даже когда все позиции совпали.
+    fom_raw *= (INT_FLOOR + (1.0 - INT_FLOOR) * int_agr)
 
     flags = []
-    if n_diag < 2:
+    if n_diag_hit < 2:
         flags.append("FEW_DIAGNOSTIC_LINES")
+    if int_dev > INT_LIMIT_LOG:
+        flags.append("INTENSITY_CONFLICT")
     if len(matched) == 1:
         flags.append("SINGLE_LINE_MATCH")
     if not any(ref_int[ri] >= STRONG_REF_INT for ri in matched_ri):
@@ -461,6 +512,8 @@ def _score_phase(ph, obs_peaks, tol=TOL_DEFAULT, allowed_obs=None,
         "cov_excess": round(cov_excess, 4),
         "p_chance": round(p_chance, 4),
         "obs_strong": round(obs_strong, 4),
+        "int_agr": round(int_agr, 4),
+        "int_dev": round(int_dev, 4),
         "expected_false": round(expected_false, 6),
         "chance_penalty": round(chance_pen, 3),
         "key_hits": key_hits,
@@ -470,6 +523,7 @@ def _score_phase(ph, obs_peaks, tol=TOL_DEFAULT, allowed_obs=None,
         "n_ref_total": n_ref_total,
         "n_ref_out_of_range": n_out,
         "n_diag": n_diag,
+        "n_diag_hit": n_diag_hit,
         "mean_dtheta": round(mean_dtheta, 4),
         "matched": matched,
         "datasource": source,
@@ -597,12 +651,15 @@ def estimate_shift(peaks, db, tol=TOL_DEFAULT, span=SHIFT_SPAN, step=SHIFT_STEP,
         local = [0.0] * nbins
         local_sum = [0.0] * nbins
         n_lines = 0
-        ref_weight = 0.0                       # вес ВСЕХ сильных линий в диапазоне
+        weights = []                           # веса сильных линий в диапазоне
+        voted = 0.0                            # вес линий, нашедших партнёра
         for rtt, rint in _ref_positions(ph, rad):
             if rint < SHIFT_MIN_REF_INT or rtt < lo or rtt > hi:
                 continue
             n_lines += 1
-            ref_weight += rint / 100.0
+            w = rint / 100.0
+            weights.append(w)
+            hit = False
             for oi in _near(rtt, span + tol, obs_index):
                 resid = float(obs[oi]["two_theta"]) - rtt
                 if abs(resid) > span:
@@ -610,16 +667,19 @@ def estimate_shift(peaks, db, tol=TOL_DEFAULT, span=SHIFT_SPAN, step=SHIFT_STEP,
                 k = int(round((resid + span) / step))
                 if k < 0 or k >= nbins:
                     continue
-                w = rint / 100.0            # вес голоса = интенсивность эталона
-                local[k] += w
+                hit = True
+                local[k] += w              # вес голоса = интенсивность эталона
                 local_sum[k] += w * resid
+            if hit:
+                voted += w
         if n_lines < SHIFT_MIN_LINES or sum(local) <= 0:
             continue
-        # Когерентность = какая доля веса карточки собралась в ОДНОМ бине.
-        # Требуем и абсолютный минимум совпавшего веса, и долю от всех сильных
-        # линий карточки: карточка, у которой совпала пара линий из десяти,
-        # указывает не юстировку, а случайное совпадение.
-        if max(local) < SHIFT_MIN_COHERENCE * ref_weight:
+        # Когерентность = какая доля веса «голосующих» линий карточки собралась
+        # в ОДНОМ бине. Считаем от линий, реально нашедших партнёра: линия,
+        # которой в образце нет, не должна ни подтверждать, ни опровергать
+        # юстировку. Иначе карточка с точной половиной линий отбраковывалась.
+        ref_weight = max(sum(weights), 1e-9)
+        if max(local) < SHIFT_MIN_COHERENCE * max(voted, 1e-9):
             continue
         if max(local) < SHIFT_MIN_MATCH:
             continue
@@ -650,7 +710,8 @@ def estimate_shift(peaks, db, tol=TOL_DEFAULT, span=SHIFT_SPAN, step=SHIFT_STEP,
             # значимость пика гистограммы над фоном: пуассоновский z-тест.
             # Фиксированный «×2 над фоном» не работает в плотных спектрах
             # (фон сам велик), а z-тест масштабируется с фоном.
-            z = (best - background) / math.sqrt(background) if background > 0 else 0.0
+            z = ((best - background) / math.sqrt(background + 0.25)
+                 if best > background else 0.0)
             peak_ok = bool(best >= max(SHIFT_MIN_VOTES, 2.0 * background)
                            or z >= SHIFT_MIN_Z)
             accepted = bool(gain_ok and peak_ok)
@@ -853,8 +914,66 @@ def _evaluate(peaks, db, tol, elements_only, shift, shift_mode, two_theta_min,
     return {"scored": scored, "obs": obs, "map_obs": mapping, "context": context}
 
 
-def _select(scored, min_fom, max_phases):
-    """Отобрать фазы: порог FOM, без дублей карточек одной формулы."""
+def _pattern_lines(ph, rad=None):
+    """Сильные линии карточки (I >= 20 % от максимума) в текущем излучении."""
+    refs = _ref_positions(ph, rad)
+    if not refs:
+        return []
+    imax = max(r[1] for r in refs) or 1.0
+    return [tt for tt, inten in refs if inten >= 0.2 * imax]
+
+
+def _heavy_composition(ph):
+    """Состав без водорода: CaH4SO6 и CaSO6 — одна и та же фаза для PXRD."""
+    formula = str(ph.get("formula") or "")
+    out = []
+    i = 0
+    while i < len(formula):
+        ch = formula[i]
+        if ch.isupper():
+            j = i + 1
+            while j < len(formula) and formula[j].islower():
+                j += 1
+            el = formula[i:j]
+            k = j
+            while k < len(formula) and (formula[k].isdigit() or formula[k] == '.'):
+                k += 1
+            num = formula[j:k]
+            if el != "H":
+                out.append(el + num)
+            i = k
+        else:
+            # «хвост» без элемента (Gg2Hh5b): часть обозначения, не теряем
+            j = i
+            while j < len(formula) and not formula[j].isupper():
+                j += 1
+            out.append(formula[i:j])
+            i = j
+    return "".join(sorted(out))
+
+
+def _same_pattern(ph1, ph2, rad=None, tol=SAME_PATTERN_TOL, frac=SAME_PATTERN_FRAC):
+    """Дубль описания одной фазы: тот же состав без H и та же порошковая картина.
+
+    В базе гипс описан и как CaH4SO6, и как CaSO6; показывать оба как разные
+    кандидаты нельзя — это удваивает «подтверждение» и вытесняет настоящие фазы
+    из результата. Требуем совпадения и состава (без водорода — рентген его не
+    видит), и сильных линий: иначе изоструктурные, но разные фазы (кварц/BeF2)
+    склеились бы в одну.
+    """
+    if _heavy_composition(ph1) != _heavy_composition(ph2):
+        return False
+    a, b = _pattern_lines(ph1, rad), _pattern_lines(ph2, rad)
+    if len(a) < 3 or len(b) < 3:
+        return False
+    if len(a) > len(b):
+        a, b = b, a
+    hit = sum(1 for tt in a if any(abs(tt - t) <= tol for t in b))
+    return hit / float(len(a)) >= frac
+
+
+def _select(scored, min_fom, max_phases, radiation=None):
+    """Отобрать фазы: порог FOM, без дублей карточек одной формулы и одной картины."""
     out = []
     per_formula = {}
     limit = max(1, int(max_phases))
@@ -867,6 +986,17 @@ def _select(scored, min_fom, max_phases):
             continue
         if any(abs(sc["fom"] - prev) <= DUP_FOM_TOL for prev in kept):
             continue
+        twin = next((other for other in out
+                     if _same_pattern(sc["phase"], other["phase"], radiation)), None)
+        if twin is not None:
+            # одна фаза описана дважды: оставляем более полную карточку
+            if sc["n_matched"] > twin["n_matched"]:
+                out[out.index(twin)] = sc
+                per_formula[twin["phase"].get("formula") or ""] = [
+                    v for v in per_formula[twin["phase"].get("formula") or ""] if v != twin["fom"]]
+                kept = per_formula.setdefault(formula, [])
+                kept.append(sc["fom"])
+            continue
         kept.append(sc["fom"])
         out.append(sc)
         if len(out) >= limit:
@@ -874,10 +1004,53 @@ def _select(scored, min_fom, max_phases):
     return out
 
 
+def _weak_claimants(chosen, scored, obs, mapping, min_fom):
+    """Фазы «недостаточно данных» для сильных необъяснённых пиков.
+
+    Если сильный пик образца не объяснён ни одним кандидатом, а какая-то фаза
+    совпала с ним своей единственной линией — об этом надо сообщить (status
+    ``weak``, флаг FEW_DIAGNOSTIC_LINES), иначе сильнейший пик молча остаётся
+    «не объяснён». Такие фазы НЕ считаются подтверждёнными и не попадают в
+    элементы; их FOM остаётся низким. Ограничение — MAX_WEAK_REPORTED.
+    """
+    if not chosen:
+        return []
+    claimed = set()
+    for sc in chosen:
+        claimed.update(pi for _ri, pi, _d in sc["matched"])
+    imax = max((float(o["intensity"]) for o in obs), default=0.0) or 1.0
+    orphans = [pi for k, pi in enumerate(mapping)
+               if pi not in claimed and float(obs[k]["intensity"]) >= WEAK_ANCHOR * imax]
+    if not orphans:
+        return []
+    out = []
+    taken = {sc["phase"].get("id") for sc in chosen}
+    peak_int = {}
+    for k, o in enumerate(obs):
+        peak_int[mapping[k]] = max(peak_int.get(mapping[k], 0.0), float(o["intensity"]))
+    for pidx in sorted(orphans, key=lambda p: -peak_int.get(p, 0.0)):
+        for sc in scored:
+            if sc["fom"] >= min_fom or "FEW_DIAGNOSTIC_LINES" not in sc["flags"]:
+                continue
+            if sc["phase"].get("id") in taken:
+                continue
+            if pidx not in [pi for _ri, pi, _d in sc["matched"]]:
+                continue
+            if any(_same_pattern(sc["phase"], other["phase"], None) for other in out):
+                continue
+            out.append(sc)
+            taken.add(sc["phase"].get("id"))
+            break
+        if len(out) >= MAX_WEAK_REPORTED:
+            break
+    return out
+
+
 def _phase_status(sc, min_fom, min_share):
     """Статус фазы: candidate | ambiguous | weak."""
     flags = sc.get("flags") or []
-    if "FEW_DIAGNOSTIC_LINES" in flags or "SINGLE_LINE_MATCH" in flags:
+    if ("FEW_DIAGNOSTIC_LINES" in flags or "SINGLE_LINE_MATCH" in flags
+            or "INTENSITY_CONFLICT" in flags):
         return "weak"
     if sc.get("n_unique_peaks", 0) <= 0:
         return "ambiguous"
@@ -920,7 +1093,7 @@ def search_phases(peaks, db, tol=TOL_DEFAULT, min_fom=45.0, top=30,
     ev = _evaluate(peaks, db, tol, elements_only, shift, shift_mode,
                    two_theta_min, two_theta_max, rad, db_filter, use_profile,
                    min_obs_int, max_ref_lines)
-    chosen = _select(ev["scored"], min_fom, top)
+    chosen = _select(ev["scored"], min_fom, top, ev["context"]["radiation"])
     for sc in chosen:
         sc.setdefault("n_unique_peaks", sc["n_matched"])
         sc["status"] = _phase_status(sc, min_fom, 0.0)
@@ -947,7 +1120,8 @@ def explain(peaks, db, tol=TOL_DEFAULT, min_fom=55.0, max_phases=MAX_PHASES,
                    min_obs_int, max_ref_lines, profile_bonus)
     scored = ev["scored"]
     obs, mapping, context = ev["obs"], ev["map_obs"], ev["context"]
-    chosen = _select(scored, min_fom, max_phases)
+    chosen = _select(scored, min_fom, max_phases, context["radiation"])
+    chosen += _weak_claimants(chosen, scored, obs, mapping, min_fom)
     n_peaks = len(peaks or ())
     searched = set(mapping)
 
