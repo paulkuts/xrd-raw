@@ -300,6 +300,14 @@ class TestFullExport(TempCase):
         self.assertEqual(len(codes), len(scores))
         self.assertEqual(len(set(codes)), len(codes), "коды фаз должны быть уникальны")
 
+        # излучение — одно и то же в TXT, XLSX («Сводка») и на самом графике
+        _data, _step, meta = parse(str(self.raw))
+        rad = radiation.Radiation.from_settings(meta)
+        self.assertIn("λ = {:.4f} Å".format(rad.lam), self.txt)
+        svg_text = (self.outdir / "synthetic_phases_paper.svg").read_text(encoding="utf-8")
+        self.assertIn("Излучение", svg_text)
+        self.assertIn("λ = {:.4f}".format(rad.lam), svg_text)
+
     def test_phase_labels_land_on_matching_peaks(self):
         """Подпись фазы стоит на пике, где действительно есть её рефлекс.
 
@@ -388,16 +396,29 @@ class TestLegacyStructure(TempCase):
     на чужие пики.
     """
 
+    # Заведомо слабый пик (ниже порога поиска 3 %). Синтетика в этом файле
+    # даёт все пики >= 23 %, поэтому без него маска фильтра совпадает с полным
+    # списком и проверка отображения индексов вырождается (obs_index == full).
+    WEAK_TWO_THETA = 12.345
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         data, _step, meta = parse(str(cls.raw))
-        cls.peaks = identify._pick([a for a, _ in data], [i for _, i in data],
-                                   radiation.Radiation.from_settings(meta))
+        picked = identify._pick([a for a, _ in data], [i for _, i in data],
+                                radiation.Radiation.from_settings(meta))
+        weak = {"two_theta": cls.WEAK_TWO_THETA, "d": round(d_spacing(cls.WEAK_TWO_THETA), 4),
+                "intensity": 1.2, "height": 1.2, "prominence": 1.0, "fwhm": 0.10,
+                "snr": 0.8, "wavelength": radiation.BASE_WAVELENGTH}
+        # слабый пик ставится первым (2θ = 12.3 < 18.0): индексы obs-списка
+        # сдвигаются относительно полного — именно это и проверяют тесты
+        cls.peaks = [weak] + list(picked)
+        for i, peak in enumerate(cls.peaks):
+            peak["n"] = i + 1
+            peak["peak_id"] = i
         # индексы отфильтрованного списка (как это делал старый explain)
         cls.obs = [i for i, p in enumerate(cls.peaks) if p["intensity"] >= 3.0]
-        weak = [i for i, p in enumerate(cls.peaks) if p["intensity"] < 3.0]
-        cls.weak_index = weak[0] if weak else None
+        cls.weak_index = 0
         cls.legacy = cls._legacy_result(cls.peaks, cls.obs)
 
     @staticmethod
@@ -504,6 +525,81 @@ class TestLegacyStructure(TempCase):
         self.assertLessEqual(len(plot_xrd.LAST["labels"]), plot_xrd.MAX_LABELS)
         self.assertTrue(set(plot_xrd.LAST["codes"]) <= {"Q", "C", "V"},
                         plot_xrd.LAST["codes"])
+
+    def test_legacy_outputs_consistent(self):
+        """Сквозная сверка на старой структуре: TXT ↔ XLSX ↔ SVG.
+
+        Одни и те же пики (по 2θ), одинаковые статусы, одинаковый набор фаз
+        с кодами Q/C/V, одна и та же строка излучения; PNG >= 300 dpi,
+        SVG остаётся векторным.
+        """
+        from openpyxl import load_workbook
+
+        data, _step, meta = parse(str(self.raw))
+        rad = radiation.Radiation.from_settings(meta)
+        ans = {"peaks": self.peaks, "result": self.legacy, "meta": meta, "data": data,
+               "step": STEP, "db": None, "radiation": rad,
+               "sha256": identify.sha256_file(self.raw), "settings": {}}
+        txt = identify.build_report(ans, self.raw, run_mode="тест", db_meta={}, n_db=0)
+        xlsx = xlsx_out.make_xlsx(str(self.raw), out=str(self.tmp / "legacy_c.xlsx"),
+                                  phases_result=self.legacy, peaks=self.peaks,
+                                  radiation=rad)
+        png, svg, _meta = plot_xrd.make(str(self.raw), theme="light",
+                                        outdir=str(self.tmp / "legacy_consistency"),
+                                        with_phases=True, phases_result=self.legacy,
+                                        peaks=self.peaks, radiation=rad)
+
+        wb = load_workbook(str(xlsx))
+        head = [c.value for c in wb["Пики"][1]]
+        rows = list(wb["Пики"].iter_rows(min_row=2, values_only=True))
+        self.assertEqual(len(rows), len(self.peaks), "лист «Пики» потерял пики")
+        by_angle = {round(float(r[1]), 2): r[head.index("Статус")] for r in rows}
+        self.assertEqual(len(by_angle), len(self.peaks), "2θ пиков в XLSX не уникальны")
+
+        # 1) статусы в TXT и XLSX совпадают пик в пик
+        ru_to_status = {v: k for k, v in result_view.STATUS_RU.items()}
+        txt_rows = txt_status_rows(txt)
+        self.assertTrue(txt_rows, "в TXT нет таблицы статусов")
+        for angle, ru in txt_rows:
+            self.assertIn(angle, by_angle, "пик {:.2f}° есть в TXT, но не в XLSX".format(angle))
+            self.assertEqual(by_angle[angle], ru_to_status[ru],
+                             "статус {:.2f}° расходится: TXT {} vs XLSX {}".format(
+                                 angle, ru, by_angle[angle]))
+        below = [a for a, s in by_angle.items() if s == result_view.STATUS_BELOW]
+        self.assertEqual(len(below), 1, "под порогом должен быть ровно слабый пик")
+        self.assertAlmostEqual(below[0], self.WEAK_TWO_THETA, places=2)
+        self.assertEqual(len(txt_rows), len(self.peaks) - len(below))
+
+        # 2) подписи графика стоят на пиках из XLSX (не на «под порогом»)
+        labeled = list(plot_xrd.LAST["labels"])
+        self.assertTrue(labeled, "на графике нет подписей")
+        self.assertLessEqual(len(labeled), plot_xrd.MAX_LABELS)
+        explained = [a for a, s in by_angle.items() if s != result_view.STATUS_BELOW]
+        for angle in labeled:
+            self.assertLess(min(abs(angle - a) for a in explained), ANGLE_TOL,
+                            "подпись {:.2f}° не соответствует пику XLSX".format(angle))
+
+        # 3) излучение одно и то же в TXT, XLSX и на графике
+        self.assertIn(rad.describe(), txt)
+        summary = {str(r[0]): r[1] for r in wb["Сводка"].iter_rows(values_only=True)
+                   if r and r[0]}
+        self.assertEqual(str(summary["Излучение"]), rad.describe())
+        self.assertAlmostEqual(float(summary["Длина волны, Å"]), rad.lam, places=5)
+        svg_text = Path(svg).read_text(encoding="utf-8")
+        self.assertIn("λ = {:.4f}".format(rad.lam), svg_text)
+
+        # 4) те же фазы и коды: Q/C/V, Bragg-полосы по числу фаз
+        codes = plot_xrd.LAST["codes"]
+        self.assertEqual(codes, ["Q", "C", "V"])
+        self.assertEqual(plot_xrd.LAST["n_bragg"], len(self.legacy["phases"]))
+        for score in self.legacy["phases"]:
+            self.assertIn(score["phase"]["formula"], txt)
+            self.assertIn(result_view.phase_name(score["phase"]), svg_text)
+
+        # 5) PNG >= 300 dpi, SVG векторный
+        self.assertGreaterEqual(png_info(png)[2], 300)
+        self.assertNotIn("<image", svg_text)
+        self.assertGreater(svg_text.count("<path"), 20)
 
 
 class TestExplicitSpaceMarker(TempCase):

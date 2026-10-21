@@ -310,12 +310,31 @@ class PeakView(object):
             self._filtered = idx
         return self._filtered
 
+    def _legacy_shape(self):
+        """Следы старой структуры: ``per_peak`` с кортежами ``(phase_no, dtheta)``.
+
+        Контракт 1.0 (§4) требует словари ``{phase_no, dtheta, ref_int, overlap}``;
+        кортежи мог выдать только старый ``phases.explain``, а он нумеровал пики
+        в отфильтрованном списке (§3). Это однозначное свидетельство старого
+        формата, даже если маска фильтра совпала с полным списком.
+        """
+        saw_tuple = False
+        for value in (self.result.get("per_peak") or {}).values():
+            for item in value or ():
+                if isinstance(item, dict):
+                    return False            # новый формат — не старый
+                if isinstance(item, (tuple, list)):
+                    saw_tuple = True
+        return saw_tuple
+
     def _detect_space(self):
         declared = self.result.get(SPACE_KEY)
         if declared in ("full", "filtered"):
             return declared
         if any(key in self.result for key in _CONTRACT_KEYS):
             return "full"
+        if self._legacy_shape():
+            return "filtered"
         keys = list((self.result.get("per_peak") or {}).keys())
         keys += list(self.result.get("unassigned") or ())
         ints = [k for k in (_as_int(k) for k in keys) if k is not None]
