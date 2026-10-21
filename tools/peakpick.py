@@ -4,35 +4,80 @@
 
 Вход: два списка/массива — 2θ (град) и интенсивность.
 Выход: список пиков с положением 2θ, d (Å), интенсивностью, I отн. (%) и FWHM.
+
+Пороги адаптивные. Раньше prominence/height считались только как доля от
+максимума сигнала, поэтому на слабом шумном образце шум принимался за пики
+(реальный файл 261007115241.raw: 120 «пиков» при ~14 значимых). Теперь:
+
+  σ  — оценка шума по MAD разностей соседних точек (устойчива к пикам и фону);
+  порог prominence = max(min_prominence * max(сигнал), prominence_snr * σ);
+  порог высоты     = max(min_height     * max(сигнал), height_snr     * σ).
+
+Старые kwarg-и и их дефолты сохранены: при малом шуме поведение прежнее,
+при большом — порог поднимается вместе с шумом. `adaptive=False` возвращает
+чисто «долевые» пороги.
+
+Детекция идёт по копии сигнала: сглаживание и вычитание локального фона
+(скользящий минимум) выполняются внутри функции, исходные данные не меняются.
+
+Длина волны — из единого источника tools/radiation.py (по умолчанию Cu Kα
+средневзвешенная 1.54184 Å, та же, в которой посчитана база эталонов).
 """
 
 import math
 
 import numpy as np
 
-CU_KA1 = 1.54056   # Å, Cu Kα1
-CU_KA = 1.5418     # Å, средневзвешенная Cu Kα
+try:  # обычный запуск: tools/ лежит в sys.path
+    import radiation as _rad
+    from radiation import BASE_WAVELENGTH, d_from_two_theta as _rad_d
+    from radiation import two_theta_from_d as _rad_tt
+except ImportError:  # запуск как пакет tools.peakpick
+    from . import radiation as _rad
+    from .radiation import BASE_WAVELENGTH, d_from_two_theta as _rad_d
+    from .radiation import two_theta_from_d as _rad_tt
+
+# Совместимость: раньше константы жили здесь. Источник истины — radiation.py.
+CU_KA1 = _rad.ANODES["Cu"]["ka1"]          # 1.54056 Å, Cu Kα1
+CU_KA = BASE_WAVELENGTH                    # 1.54184 Å, средневзвешенная Cu Kα
+
+# Пороги по шуму (в единицах σ). Пик должен быть виден над шумом:
+# prominence >= 5σ и высота над локальным фоном >= 4σ. Проверено на синтетике:
+# при 5σ/4σ шум (60 спектров, гауссов и пуассоновский) не даёт ни одного пика,
+# при 4σ/3σ — единичные ложные. На реальном слабом образце 261007115241.raw
+# остаётся 7 значимых линий вместо 120 «пиков» шума.
+PROMINENCE_SNR = 5.0
+HEIGHT_SNR = 4.0
+BASELINE_WINDOW = 1.2   # °2θ — окно скользящего минимума (локальный фон)
+MERGE_DEG = 0.05        # °2θ — ближе этого пики считаются одним
 
 
-def d_from_2theta(two_theta, wavelength=CU_KA):
+def _resolve_wavelength(wavelength=None, radiation=None):
+    """λ (Å): объект Radiation > явный wavelength > база (Cu Kα средневзвешенная)."""
+    if radiation is not None:
+        lam = getattr(radiation, "lam", radiation)
+        try:
+            lam = float(lam)
+        except (TypeError, ValueError):
+            lam = None
+        if lam and lam > 0:
+            return lam
+    if wavelength is not None:
+        return float(wavelength)
+    return float(BASE_WAVELENGTH)
+
+
+def d_from_2theta(two_theta, wavelength=None, radiation=None):
     """Межплоскостное расстояние по углу 2θ (град)."""
-    th = math.radians(two_theta / 2.0)
-    s = math.sin(th)
-    if s <= 1e-9:
-        return float("inf")
-    return wavelength / (2.0 * s)
+    return _rad_d(float(two_theta), _resolve_wavelength(wavelength, radiation))
 
 
-def two_theta_from_d(d, wavelength=CU_KA):
+def two_theta_from_d(d, wavelength=None, radiation=None):
     """Угол 2θ (град) по межплоскостному расстоянию."""
-    if d <= 0:
-        return float("nan")
-    x = wavelength / (2.0 * d)
-    if x >= 1.0:
-        return float("nan")
-    return 2.0 * math.degrees(math.asin(x))
+    return _rad_tt(float(d), _resolve_wavelength(wavelength, radiation))
 
 
+# ------------------------------------------------------------------- обработка
 def _savgol_coeffs(window, poly):
     """Коэффициенты сглаживающего фильтра Савицкого–Голея (по центру)."""
     half = window // 2
@@ -43,7 +88,7 @@ def _savgol_coeffs(window, poly):
 
 
 def smooth(y, window=7, poly=3):
-    """Сглаживание Савицкого–Голея с сохранением краёв."""
+    """Сглаживание Савицкого–Голея с сохранением краёв (копия, не in-place)."""
     y = np.asarray(y, dtype=float)
     n = len(y)
     if n < window or window < 3:
@@ -57,21 +102,62 @@ def smooth(y, window=7, poly=3):
     return out
 
 
+def noise_sigma(y):
+    """Оценка σ шума по разностям соседних точек (MAD, устойчиво к пикам).
+
+    Для белого шума σ разности = σ·√2, медиана |разность| = 0.6745·σ·√2,
+    отсюда σ = 1.4826·median(|Δ|)/√2. Пики и фон занимают малую долю точек,
+    поэтому медиана их почти не замечает.
+    """
+    y = np.asarray(y, dtype=float)
+    if y.size < 3:
+        return 0.0
+    d = np.diff(y)
+    d = d[np.isfinite(d)]
+    if d.size < 2:
+        return 0.0
+    med = float(np.median(d))
+    mad = float(np.median(np.abs(d - med)))
+    sigma = 1.4826 * mad / math.sqrt(2.0)
+    if sigma <= 0.0:  # квантованные/округлённые данные: MAD вырождается в 0
+        sigma = float(np.std(d)) / math.sqrt(2.0)
+    return max(0.0, float(sigma))
+
+
+estimate_noise = noise_sigma
+
+
+def _rolling_min(y, window):
+    """Скользящий минимум (локальный фон) через strided-представление numpy."""
+    y = np.asarray(y, dtype=float)
+    n = y.size
+    w = int(window)
+    if n == 0:
+        return y.copy()
+    if w < 3:
+        return y.copy()
+    if w >= n:
+        return np.full(n, float(np.min(y)))
+    if w % 2 == 0:
+        w += 1
+    half = w // 2
+    padded = np.pad(y, (half, half), mode="edge")
+    view = np.lib.stride_tricks.sliding_window_view(padded, w)
+    return view.min(axis=1)
+
+
 def _prominences(y):
     """Prominence каждого локального максимума (упрощённый, но корректный)."""
     n = len(y)
     prom = np.zeros(n)
-    # индексы локальных максимумов
     peaks = [i for i in range(1, n - 1) if y[i] >= y[i - 1] and y[i] > y[i + 1]]
-    if y[0] > y[1]:
+    if n > 1 and y[0] > y[1]:
         peaks.insert(0, 0)
-    if y[n - 1] >= y[n - 2]:
+    if n > 1 and y[n - 1] >= y[n - 2]:
         peaks.append(n - 1)
     for i in peaks:
-        # влево — до более высокой точки
-        left = 0.0
-        j = i - 1
         lmin = y[i]
+        j = i - 1
         while j >= 0:
             if y[j] > y[i]:
                 break
@@ -84,8 +170,6 @@ def _prominences(y):
                 break
             rmin = min(rmin, y[j])
             j += 1
-        if j < 0:
-            left = y[i]
         base = max(lmin, rmin)
         prom[i] = y[i] - base
     return prom, peaks
@@ -134,59 +218,105 @@ def _fwhm(x, y, i, half):
 
 
 def pick(x, y, min_prominence=0.02, min_height=0.01, smooth_window=7,
-         wavelength=CU_KA, max_peaks=120):
+         wavelength=None, max_peaks=120, radiation=None,
+         prominence_snr=PROMINENCE_SNR, height_snr=HEIGHT_SNR,
+         baseline_window=BASELINE_WINDOW, merge_deg=MERGE_DEG,
+         adaptive=True, sigma_noise=None):
     """Найти пики.
 
-    min_prominence — минимальная prominence в долях от максимума сигнала;
-    min_height     — минимальная абсолютная высота в долях от максимума;
-    smooth_window  — окно сглаживания (точек), 0/1 — без сглаживания.
+    min_prominence — нижний порог prominence в долях от максимума сигнала;
+    min_height     — нижний порог высоты в долях от максимума сигнала;
+    smooth_window  — окно сглаживания (точек), 0/1 — без сглаживания;
+    wavelength     — λ, Å; radiation — объект radiation.Radiation (приоритетнее);
+    max_peaks      — сколько пиков вернуть максимум;
+    prominence_snr, height_snr — пороги в σ шума (адаптивная часть);
+    baseline_window — окно локального фона, °2θ;
+    merge_deg      — пики ближе этого по 2θ объединяются;
+    adaptive       — False: только «долевые» пороги (поведение до 2.1);
+    sigma_noise    — задать σ шума вручную (иначе оценка по MAD разностей).
+
+    Возвращает список dict по возрастанию 2θ: two_theta, d, height,
+    prominence, fwhm, intensity, snr, wavelength, n (1-based), peak_id (0-based).
+    Исходные x/y не изменяются.
     """
     x = np.asarray(x, dtype=float)
     y = np.asarray(y, dtype=float)
-    if len(x) < 7:
+    if x.size != y.size:
+        raise ValueError("длины x и y не совпадают: {} и {}".format(x.size, y.size))
+    if x.size < 7:
         return []
-    y = y - np.min(y)
-    ymax = float(np.max(y))
-    if ymax <= 0:
+    if not np.all(np.isfinite(y)):
         return []
 
-    if smooth_window and smooth_window > 2:
-        ys = smooth(y, smooth_window)
-    else:
-        ys = y
-    ys = np.clip(ys, 0, None)
+    lam = _resolve_wavelength(wavelength, radiation)
 
-    prom, idxs = _prominences(ys)
+    step = float(np.median(np.diff(x))) if x.size > 1 else 0.0
+    if step <= 0:
+        step = 0.02
+
+    # --- копии для детекции: исходный сигнал не трогаем
+    ys = smooth(y, smooth_window) if smooth_window and smooth_window > 2 else y.copy()
+
+    win = int(round(float(baseline_window) / step)) if step > 0 else 31
+    win = max(5, win | 1)
+    # Локальный фон — скользящий минимум, но не ниже минимума исходной кривой.
+    # Иначе одиночный выброс (космика, край скана) даёт «звон» Савицкого–Голея:
+    # провал в сглаженной кривой, фон уходит в него, и рядом вырастают ложные
+    # пики. Медианный фильтр здесь не годится — на слабом образце настоящий
+    # пик шириной 1 канал (кварц 26.66°) неотличим от выброса, и медиана его
+    # стирает.
+    def _base(curve):
+        rm = _rolling_min(curve, win)
+        return smooth(rm, smooth_window) if smooth_window and smooth_window > 2 else rm
+
+    baseline = np.maximum(_base(ys), _base(y))
+    z = np.clip(ys - baseline, 0.0, None)
+
+    ymax = float(np.max(z))
+    if ymax <= 0.0:
+        return []
+
+    sigma = float(sigma_noise) if sigma_noise is not None else noise_sigma(y)
+    prom_floor = float(min_prominence) * ymax
+    height_floor = float(min_height) * ymax
+    if adaptive:
+        prom_floor = max(prom_floor, float(prominence_snr) * sigma)
+        height_floor = max(height_floor, float(height_snr) * sigma)
+
+    prom, idxs = _prominences(z)
     peaks = []
     for i in idxs:
-        if prom[i] < min_prominence * ymax:
+        if i <= 0 or i >= z.size - 1:      # краевые точки не считаем пиками
             continue
-        if ys[i] < min_height * ymax:
+        if prom[i] < prom_floor:
             continue
-        # базовая линия под пиком: минимум в окрестности ±(окно поиска)
-        half = max(3, int(round(0.25 / max(1e-6, (x[1] - x[0])))))  # ≈ ±0.25°
-        lo, hi = max(0, i - half), min(len(y), i + half + 1)
-        base = float(np.min(ys[lo:hi]))
-        height = float(ys[i] - base)
-        if height <= 0:
+        height = float(z[i])
+        if height < height_floor:
             continue
-        fw = _fwhm(x, ys, i, height / 2.0)
-        tt = _refine_position(x, ys, i)
+        fw = _fwhm(x, z, i, height / 2.0)
+        if fw is not None:
+            fw = float(fw)
+            if fw <= 0:
+                fw = None
+        tt = _refine_position(x, z, i)
         peaks.append({
             "two_theta": float(tt),
-            "d": d_from_2theta(tt, wavelength),
+            "d": d_from_2theta(tt, lam),
             "height": height,
             "prominence": float(prom[i]),
             "fwhm": fw,
+            "snr": (float(prom[i]) / sigma) if sigma > 0 else None,
+            "wavelength": lam,
         })
 
     if not peaks:
         return []
-    # убрать дубли ближе 0.05°
+
+    # убрать дубли ближе merge_deg
     peaks.sort(key=lambda p: p["two_theta"])
     merged = []
     for p in peaks:
-        if merged and abs(p["two_theta"] - merged[-1]["two_theta"]) < 0.05:
+        if merged and abs(p["two_theta"] - merged[-1]["two_theta"]) < merge_deg:
             if p["height"] > merged[-1]["height"]:
                 merged[-1] = p
             continue
@@ -195,9 +325,11 @@ def pick(x, y, min_prominence=0.02, min_height=0.01, smooth_window=7,
     imax = max(p["height"] for p in merged)
     for p in merged:
         p["intensity"] = 100.0 * p["height"] / imax
-    merged.sort(key=lambda p: -p["intensity"])
-    merged = merged[:max_peaks]
+    if max_peaks and len(merged) > max_peaks:
+        merged.sort(key=lambda p: -p["intensity"])
+        merged = merged[:int(max_peaks)]
     merged.sort(key=lambda p: p["two_theta"])
-    for k, p in enumerate(merged, 1):
-        p["n"] = k
+    for k, p in enumerate(merged):
+        p["peak_id"] = k
+        p["n"] = k + 1
     return merged
