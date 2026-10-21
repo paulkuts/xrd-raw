@@ -1,0 +1,157 @@
+{
+  "fixture": "dft_weak",
+  "file": "dft_weak.raw",
+  "kind": "synthetic",
+  "license": "MIT — создано в этом проекте; не является измерением",
+  "generator": "tests/fixtures/make_fixtures.py",
+  "created": "2026-10-20",
+  "seed": 20261028,
+  "two_theta": {
+    "start": 15.0,
+    "stop": 60.0,
+    "step": 0.02,
+    "points": 2251
+  },
+  "wavelength_A": 1.54184,
+  "anode_actual": "Cu",
+  "anode_metadata": "Copper",
+  "shift_deg": 0.0,
+  "profile": {
+    "shape": "pseudo-Voigt",
+    "eta": 0.5,
+    "fwhm_deg": "0.090 + 0.0012 * 2theta"
+  },
+  "noise": {
+    "model": "gaussian_abs",
+    "sigma": 8.0
+  },
+  "background": {
+    "offset": 35.0,
+    "slope_per_deg": -0.05
+  },
+  "peaks_placed": [
+    {
+      "phase": "P6_3/mmc [ICSD 76384,644543,150967]",
+      "d": 2.818,
+      "rel": 26.9,
+      "two_theta": 31.754,
+      "height": 188.3
+    },
+    {
+      "phase": "P6_3/mmc [ICSD 76384,644543,150967]",
+      "d": 2.6,
+      "rel": 11.3,
+      "two_theta": 34.496,
+      "height": 79.1
+    },
+    {
+      "phase": "P6_3/mmc [ICSD 76384,644543,150967]",
+      "d": 2.361,
+      "rel": 100.0,
+      "two_theta": 38.116,
+      "height": 700.0
+    },
+    {
+      "phase": "P6_3/mmc [ICSD 76384,644543,150967]",
+      "d": 1.911,
+      "rel": 27.2,
+      "two_theta": 47.583,
+      "height": 190.4
+    },
+    {
+      "phase": "P6_3/mmc [ICSD 76384,644543,150967]",
+      "d": 1.523,
+      "rel": 24.6,
+      "two_theta": 60.82,
+      "height": 172.2
+    }
+  ],
+  "truth": {
+    "present": [
+      {
+        "key": "dft",
+        "name": "P6_3/mmc [ICSD 76384,644543,150967]",
+        "formula": "NbN",
+        "line_source": "phases_db.json.gz::JARVIS-DFT JVASP-15025",
+        "note": "единственная фикстура, где линии взяты из базы: для DFT-фаз нет независимого литературного набора",
+        "all_lines_d_I": [
+          [
+            2.818,
+            26.9
+          ],
+          [
+            2.6,
+            11.3
+          ],
+          [
+            2.361,
+            100.0
+          ],
+          [
+            1.911,
+            27.2
+          ],
+          [
+            1.523,
+            24.6
+          ],
+          [
+            1.501,
+            19.2
+          ],
+          [
+            1.409,
+            5.1
+          ],
+          [
+            1.325,
+            10.9
+          ],
+          [
+            1.325,
+            5.4
+          ],
+          [
+            1.3,
+            1.5
+          ],
+          [
+            1.267,
+            4.3
+          ],
+          [
+            1.267,
+            8.7
+          ],
+          [
+            1.239,
+            1.7
+          ],
+          [
+            1.181,
+            1.6
+          ],
+          [
+            1.181,
+            3.3
+          ]
+        ]
+      }
+    ],
+    "absent": [
+      "quartz",
+      "calcite",
+      "gypsum"
+    ],
+    "expect_no_confident_candidate": true,
+    "datasource_expected": "JARVIS-DFT"
+  },
+  "bytes": 36142,
+  "composition": [
+    {
+      "name": "P6_3/mmc [ICSD 76384,644543,150967]",
+      "formula": "NbN",
+      "source": "phases_db.json.gz::JARVIS-DFT JVASP-15025"
+    }
+  ]
+}
