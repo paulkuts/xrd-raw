@@ -223,6 +223,10 @@ def phase_display(ph):
     formula = _formula_pretty(ph.get("formula") or "")
     name = _ru_labels().get(str(ph.get("id"))) or (ph.get("name") or "")
     formula, name = formula.strip(), str(name).strip()
+    # имя в базе часто = формуле (BaMg(CO3)2) — не дублируем
+    raw = str(ph.get("formula") or "").strip()
+    if name.replace(" ", "").lower() == raw.replace(" ", "").lower():
+        name = ""
     if formula and name and name.lower() != formula.lower():
         return "{} — {}".format(formula, name)
     return formula or name
@@ -320,8 +324,9 @@ def _formula_pretty(formula):
 
 def _plot_note(n_peaks=None, labels_count=None):
     """Пояснение обозначений под легендой (не перекрывает кривую)."""
-    return ("? — пик не объяснён;   ?* — перекрытие (на пик претендуют >=2 фаз);   "
-            "цвет и код слева от полосы — фаза\n"
+    return ("перекрытие (на пик претендуют >=2 фаз) — см. легенду;   "
+            "цвет и код слева от полосы — фаза;   "
+            "подпись «формула — название» — фаза определена\n"
             "Подписи пиков: не более 12 приоритетных (сильные и подтверждённые) "
             "из {}{}; полный список пиков, фаз и отклонений — в .txt и .xlsx".format(
                 n_peaks if n_peaks is not None else "всех",
@@ -424,14 +429,13 @@ def make(path, theme=DEFAULT_THEME, outdir=None, with_phases=False,
         title = peak_title(view, i)
         d_text = "d={:.2f} Å".format(
             lam / (2.0 * math.sin(math.radians(tt / 2.0))))
-        if title and tag == "?*":
-            text = "?* {}\n{:.2f}° · {}".format(title, tt, d_text)
-        elif title:
-            text = "{} {}\n{:.2f}° · {}".format(tag, title, tt, d_text)
-        elif tag == "?" or tag == "":
-            text = "? {:.2f}°\n{}".format(tt, d_text)
+        prefix = tag if tag and tag not in ("?", "?*") else ""
+        if title:
+            head = "{} {}".format(prefix, title) if prefix else title
+            text = "{}\n{:.2f}° · {}".format(head, tt, d_text)
         else:
-            text = "{} {:.2f}°\n{}".format(tag, tt, d_text)
+            # фаза не определена — про материал ничего не пишем, только 2θ и d
+            text = "{:.2f}°\n{}".format(tt, d_text)
         yy = top_y + imax * (0.035 + 0.055 * (k % 3))
         color = _label_color(t, view, i)
         ax.annotate(text, xy=(tt, top_y), xytext=(tt, yy), rotation=90,
@@ -494,8 +498,8 @@ def make(path, theme=DEFAULT_THEME, outdir=None, with_phases=False,
     else:
         ax.set_xlabel("2θ, градусы", color=t["text"], fontsize=11)
         fig.text(left, 0.012,
-                 "? — фаза для этого пика не определена (совпадения ниже порога); "
-                 "подписи пиков: формула — название минерала",
+                 "над пиком только 2θ и d — фаза не определена (совпадения ниже порога); "
+                 "«формула — название» — фаза определена",
                  ha="left", va="bottom", fontsize=7.8, color=t["dim"])
 
     ax.set_ylabel("Интенсивность, имп.", color=t["text"], fontsize=11)
@@ -512,7 +516,7 @@ def make(path, theme=DEFAULT_THEME, outdir=None, with_phases=False,
     if view is not None:
         sub2 += "   |   подписей пиков: {} из {}".format(len(shown), len(peaks))
         if not scores:
-            sub2 += "   |   фазы не идентифицированы (ниже порога): «?» — пик без фазы"
+            sub2 += "   |   фазы не идентифицированы (ниже порога): у пиков без названия материала фаза не определена"
     fig.text(0.5, 0.975, title, ha="center", va="top", fontsize=14.5, color=t["text"])
     fig.text(0.5, 0.942, sub1, ha="center", va="top", fontsize=9.5, color=t["dim"])
     fig.text(0.5, 0.917, sub2, ha="center", va="top", fontsize=9.0,
