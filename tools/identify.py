@@ -251,7 +251,7 @@ def _peaks_status_block(view, rad=None):
     scores = view.phase_scores()
     codes = result_view.phase_codes([sc.get("phase") for sc in scores])
     lines = ["ПИКИ: СТАТУСЫ (Δ2θ — отклонение от ближайшего рефлекса фазы)"]
-    lines.append("   {:>4s} {:>8s} {:>8s} {:>6s}  {:<15s} {:<34s} {:>8s}".format(
+    lines.append("   {:>4s} {:>8s} {:>8s} {:>6s}  {:<21s} {:<34s} {:>8s}".format(
         "№", "2θ, °", "d, Å", "I, %", "статус", "фаза(ы)", "Δ2θ, °"))
     order = view.assigned + view.ambiguous + view.unexplained
     order.sort(key=lambda i: float(view.peaks[i]["two_theta"]))
@@ -269,7 +269,7 @@ def _peaks_status_block(view, rad=None):
                 code, no, result_view.phase_name((score or {}).get("phase"), 16)).strip())
         best_dtheta = entries[0]["dtheta"] if entries else None
         d_value = rad.d(tt) if rad is not None else (peak.get("d") or 0.0)
-        lines.append("   {:4d} {:8.2f} {:8.3f} {:6.1f}  {:<15s} {:<34s} {:>8s}".format(
+        lines.append("   {:4d} {:8.2f} {:8.3f} {:6.1f}  {:<21s} {:<34s} {:>8s}".format(
             peak.get("n", i + 1), tt, float(d_value),
             float(peak.get("intensity") or 0.0),
             result_view.STATUS_RU.get(status, status),
@@ -362,15 +362,22 @@ def build_report(ans, path, run_mode=None, db_meta=None, n_db=None, when=None):
     add("НАСТРОЙКИ ДЕТЕКЦИИ И СОПОСТАВЛЕНИЯ:")
     add("  пиков найдено:            {} (из них участвовало в поиске: {})".format(
         view.n, res.get("n_obs", "—")))
-    add("  мин. интенсивность пика:  {} % от максимума (пики слабее — below_threshold)".format(
-        _fmt(settings.get("min_obs_int"), "{:g}")))
+    min_obs_int = settings.get("min_obs_int")
+    if min_obs_int is None:                     # старая структура без settings
+        min_obs_int = view.min_obs_int
+    add("  мин. интенсивность пика:  {} % от максимума "
+        "(пики слабее — под порогом поиска, below_threshold)".format(
+            _fmt(min_obs_int, "{:g}")))
     add("  допуск по 2θ:             ±{}°".format(_fmt(settings.get("tol"), "{:g}")))
     add("  порог FOM:                {}".format(_fmt(settings.get("min_fom"), "{:g}")))
-    shift_text = ("{:+.3f}°".format(shift_value) if abs(shift_value) >= 0.005
-                  else "не применялся (0.000°)")
-    add("  сдвиг нуля 2θ:            {} ({}{})".format(
-        shift_mode, shift_text,
-        ", выигрыш {:+.2f}".format(float(shift_gain)) if shift_gain else ""))
+    gain_text = ", выигрыш {:+.2f}".format(float(shift_gain)) if shift_gain else ""
+    if abs(shift_value) >= 0.005:
+        shift_text = "{} ({:+.3f}°{})".format(shift_mode, shift_value, gain_text)
+    elif "не примен" in str(shift_mode):
+        shift_text = "не применялся (0.000°{})".format(gain_text)
+    else:
+        shift_text = "{} (0.000°{})".format(shift_mode, gain_text)
+    add("  сдвиг нуля 2θ:            {}".format(shift_text))
     add("  профиль (prior):          {}".format(
         "включён — мягкий бонус к ранжированию, не фильтр"
         if settings.get("use_profile", True) else "выключен"))
