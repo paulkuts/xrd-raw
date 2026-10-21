@@ -200,6 +200,24 @@ def _label_color(t, view, index):
     return t["dim"]
 
 
+def peak_names(view, index, limit=2):
+    """Короткие формулы фаз, претендующих на пик (для подписи на графике)."""
+    if view is None:
+        return []
+    names = []
+    for entry in view.candidates(index)[:limit]:
+        try:
+            no = entry.get("phase_no")
+        except AttributeError:      # старый кортеж (phase_no, dtheta)
+            no = entry[0] if entry else None
+        score = view.phase(no) if no else None
+        ph = (score or {}).get("phase") or {}
+        name = ph.get("formula") or ph.get("name") or ""
+        if name and name not in names:
+            names.append(name)
+    return names
+
+
 def peak_tag(view, index, codes=None):
     """Метка пика: код фазы, '?*' (перекрытие) или '?' (не объяснён)."""
     if view is None:
@@ -358,10 +376,16 @@ def make(path, theme=DEFAULT_THEME, outdir=None, with_phases=False,
         tt = float(p["two_theta"])
         top_y = _curve_height(x, y, tt)
         tag = peak_tag(view, i, codes)
-        if tag:
-            text = "{} {:.2f}°".format(tag, tt)
+        names = peak_names(view, i)
+        d_text = "d={:.2f} Å".format(
+            lam / (2.0 * math.sin(math.radians(tt / 2.0))))
+        if names:
+            # «какой материал где»: подпись содержит формулу фазы, а не только код
+            text = "{}{} {:.2f}°\n{}".format(tag or "", " " + " / ".join(names), tt, d_text)
+        elif tag:
+            text = "{} {:.2f}°\n{}".format(tag, tt, d_text)
         else:
-            text = "{:.2f}°\nd={:.2f} Å".format(tt, lam / (2.0 * math.sin(math.radians(tt / 2.0))))
+            text = "{:.2f}°\n{}".format(tt, d_text)
         yy = top_y + imax * (0.035 + 0.055 * (k % 3))
         color = _label_color(t, view, i)
         ax.annotate(text, xy=(tt, top_y), xytext=(tt, yy), rotation=90,
@@ -438,6 +462,8 @@ def make(path, theme=DEFAULT_THEME, outdir=None, with_phases=False,
     sub2 = "Излучение: " + radiation_line(rad)
     if view is not None:
         sub2 += "   |   подписей пиков: {} из {}".format(len(shown), len(peaks))
+        if not scores:
+            sub2 += "   |   фазы не идентифицированы (ниже порога): «?» — пик без фазы"
     fig.text(0.5, 0.975, title, ha="center", va="top", fontsize=14.5, color=t["text"])
     fig.text(0.5, 0.942, sub1, ha="center", va="top", fontsize=9.5, color=t["dim"])
     fig.text(0.5, 0.917, sub2, ha="center", va="top", fontsize=9.0,

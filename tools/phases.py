@@ -77,6 +77,8 @@ INT_FLOOR = 0.55            # минимум множителя интенсив
 WEAK_ANCHOR = 0.15          # сильный необъяснённый пик (доля от макс.), для которого
                             # сообщаем фазу «недостаточно данных»
 MAX_WEAK_REPORTED = 2       # сколько таких фаз максимум дописываем в результат
+MAX_WEAK_CANDIDATES = 3     # сколько «слабых кандидатов» показывать, когда порог не пройден
+WEAK_CANDIDATE_MIN_FOM = 35.0   # ниже этого не показываем даже как слабого кандидата
 SAME_PATTERN_TOL = 0.30     # две карточки с совпадающими линиями — одна фаза
 SAME_PATTERN_FRAC = 0.75
 CHANCE_PENALTY_SCALE = 10.0  # штраф за log10(ожидаемого числа ложных фаз)
@@ -1122,6 +1124,26 @@ def explain(peaks, db, tol=TOL_DEFAULT, min_fom=55.0, max_phases=MAX_PHASES,
     obs, mapping, context = ev["obs"], ev["map_obs"], ev["context"]
     chosen = _select(scored, min_fom, max_phases, context["radiation"])
     chosen += _weak_claimants(chosen, scored, obs, mapping, min_fom)
+    # Кандидаты ниже порога: нужны, чтобы отчёт не выглядел «пустым» и было видно,
+    # ЧТО именно не дотянуло до порога. Это НЕ идентификация: все помечены
+    # status="below_threshold" и их флаги показываются в отчёте.
+    chosen_keys = {(id(sc), sc["phase"].get("id")) for sc in chosen}
+    weak_candidates = []
+    for sc in scored:
+        if len(weak_candidates) >= MAX_WEAK_CANDIDATES:
+            break
+        if (id(sc), sc["phase"].get("id")) in chosen_keys:
+            continue
+        if sc["fom"] < WEAK_CANDIDATE_MIN_FOM:
+            continue
+        if any(abs(sc["fom"] - w["fom"]) < 1e-9
+               and sc["phase"].get("formula") == w["phase"].get("formula")
+               for w in weak_candidates):
+            continue
+        sc = dict(sc)
+        sc["status"] = "below_threshold"
+        sc.setdefault("flags", [])
+        weak_candidates.append(sc)
     n_peaks = len(peaks or ())
     searched = set(mapping)
 
@@ -1186,6 +1208,7 @@ def explain(peaks, db, tol=TOL_DEFAULT, min_fom=55.0, max_phases=MAX_PHASES,
 
     return {
         "phases": chosen,
+        "weak_candidates": weak_candidates,
         "per_peak": per_peak,
         "unassigned": unassigned,
         "ambiguous": ambiguous,

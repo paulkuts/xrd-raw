@@ -404,7 +404,22 @@ def build_report(ans, path, run_mode=None, db_meta=None, n_db=None, when=None):
     if scores:
         out.extend(_phase_table(scores))
     else:
-        add("  ничего не идентифицировано — ослабьте порог или расширьте базу")
+        add("  ничего не идентифицировано — совпадения ниже порога FOM")
+        weak = res.get("weak_candidates") or []
+        if weak:
+            add("")
+            add("СЛАБЫЕ КАНДИДАТЫ — НЕ идентификация, а то, что не дотянуло до порога:")
+            add("(видны для контроля; вероятны случайные совпадения, FOM — не вероятность)")
+            for k, sc in enumerate(weak, 1):
+                ph = sc.get("phase") or {}
+                name = (ph.get("name") or "")[:30]
+                formula = (ph.get("formula") or "")[:14]
+                add("  {}. {:<30s} {:<14s} FOM {:5.1f}  линий {}/{}".format(
+                    k, name, formula, float(sc.get("fom") or 0.0),
+                    int(sc.get("n_matched") or 0), int(sc.get("n_ref") or 0)))
+                flags = ", ".join(sc.get("flags") or ()) or "—"
+                add("     источник: {} | флаги: {}".format(
+                    sc.get("datasource") or ph.get("src") or "—", flags))
 
     add("")
     elements = res.get("elements") or {}
