@@ -232,6 +232,17 @@ def phase_display(ph):
     return formula or name
 
 
+def _wrap_phase(text, width=18):
+    """Разбить подпись фазы на 2 строки для узкой панели: формула / название."""
+    text = str(text or "")
+    if len(text) <= width:
+        return [text]
+    if " — " in text:
+        formula, name = text.split(" — ", 1)
+        return [formula, name]
+    return [text[:width], text[width:]]
+
+
 def peak_names(view, index, limit=2):
     """Формулы фаз, претендующих на пик (для подписи на графике)."""
     if view is None:
@@ -398,7 +409,7 @@ def make(path, theme=DEFAULT_THEME, outdir=None, with_phases=False,
     note_h = 0.028 if n_bands else 0.0
     legend_h = note_h + 0.030 * n_rows
 
-    left, right = 0.078, 0.975
+    left, right = (0.185 if n_bands else 0.078), 0.975
     top = 0.885
     bragg_bottom, bragg_h = 0.0, 0.0
     legend_y = 0.008
@@ -448,7 +459,10 @@ def make(path, theme=DEFAULT_THEME, outdir=None, with_phases=False,
         ax_b.set_facecolor(t["panel"])
         ax_b.set_ylim(0.4, n_bands + 0.6)
         ax_b.set_yticks(list(range(n_bands, 0, -1)))
-        ax_b.set_yticklabels([codes[no - 1] for no, _s, _r in bands], fontsize=9.5)
+        # слева у полосы — сам материал: формула и название (а не код Ca/Ba)
+        ax_b.set_yticklabels(
+            ["\n".join(_wrap_phase(phase_display(sc.get("phase"))))
+             for _no, sc, _r in bands], fontsize=8.6)
         for side in ("top", "right", "left"):
             ax_b.spines[side].set_visible(False)
         ax_b.spines["bottom"].set_color(t["text"] if paper else t["grid"])
@@ -477,8 +491,7 @@ def make(path, theme=DEFAULT_THEME, outdir=None, with_phases=False,
         handles = [Line2D([], [], color=t["bragg"][(no - 1) % len(t["bragg"])],
                           linewidth=2.2, solid_capstyle="butt")
                    for no, _s, _r in bands]
-        legend_labels = ["{} — {} ({})".format(
-            codes[no - 1],
+        legend_labels = ["{} ({})".format(
             phase_display(score.get("phase")),
             result_view.confirmation_note(score))
             for no, score, _r in bands]
