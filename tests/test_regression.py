@@ -411,13 +411,11 @@ class TestNoiseAndBackground(unittest.TestCase):
         n = len(fixture("noise_only")["peaks"])
         self.assertLessEqual(n, 10, "ложных пиков {} (порог 10)".format(n))
 
-    @unittest.expectedFailure
     def test_weak_signal_on_steep_background(self):
         """Кварц 260 имп. на фоне 1160->60 имп. должен быть найден.
 
-        ТЕКУЩЕЕ СОСТОЯНИЕ: пики кварца есть, но explain() выбирает ложную
-        фазу (BeF2, FOM 70.7): из 27 пиков 16 — шумовые, и случайная запись
-        покрывает их плотнее, чем кварц.
+        Проверено после снижения порога пик-пикинга до 4.3σ (шум по MAD):
+        кварц находится, ложных пиков на наклонном фоне 3–4.
         """
         got = found("noise_slope")
         self.assertIn("quartz", got,
