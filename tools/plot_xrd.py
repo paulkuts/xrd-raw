@@ -200,8 +200,36 @@ def _label_color(t, view, index):
     return t["dim"]
 
 
+_RU_LABELS = None
+
+
+def _ru_labels():
+    """Русские названия фаз для профиля стройматериалов (id -> label)."""
+    global _RU_LABELS
+    if _RU_LABELS is None:
+        _RU_LABELS = {}
+        try:
+            import building_materials as bm
+            for rec in bm.PROFILE:
+                _RU_LABELS[str(rec.get("id"))] = rec.get("label") or ""
+        except Exception:
+            pass
+    return _RU_LABELS
+
+
+def phase_display(ph):
+    """'CaCO₃ — Кальцит' (русское название, если известно, иначе из базы)."""
+    ph = ph or {}
+    formula = _formula_pretty(ph.get("formula") or "")
+    name = _ru_labels().get(str(ph.get("id"))) or (ph.get("name") or "")
+    formula, name = formula.strip(), str(name).strip()
+    if formula and name and name.lower() != formula.lower():
+        return "{} — {}".format(formula, name)
+    return formula or name
+
+
 def peak_names(view, index, limit=2):
-    """Короткие формулы фаз, претендующих на пик (для подписи на графике)."""
+    """Формулы фаз, претендующих на пик (для подписи на графике)."""
     if view is None:
         return []
     names = []
@@ -212,10 +240,27 @@ def peak_names(view, index, limit=2):
             no = entry[0] if entry else None
         score = view.phase(no) if no else None
         ph = (score or {}).get("phase") or {}
-        name = ph.get("formula") or ph.get("name") or ""
+        name = _formula_pretty(ph.get("formula") or "")
         if name and name not in names:
             names.append(name)
     return names
+
+
+def peak_title(view, index):
+    """Подпись материала для пика: 'формула — название' лучшего кандидата.
+
+    Для перекрытия (>=2 фаз) всё равно показываем лучшего кандидата —
+    альтернативы перечислены в легенде под графиком, а метка '?*'
+    говорит, что пик объясняется неоднозначно.
+    """
+    if view is None:
+        return ""
+    best = view.best(index) or {}
+    no = best.get("phase_no")
+    score = view.phase(no) if no else None
+    if not score:
+        return ""
+    return phase_display((score or {}).get("phase"))
 
 
 def peak_tag(view, index, codes=None):
@@ -376,16 +421,17 @@ def make(path, theme=DEFAULT_THEME, outdir=None, with_phases=False,
         tt = float(p["two_theta"])
         top_y = _curve_height(x, y, tt)
         tag = peak_tag(view, i, codes)
-        names = peak_names(view, i)
+        title = peak_title(view, i)
         d_text = "d={:.2f} Å".format(
             lam / (2.0 * math.sin(math.radians(tt / 2.0))))
-        if names:
-            # «какой материал где»: подпись содержит формулу фазы, а не только код
-            text = "{}{} {:.2f}°\n{}".format(tag or "", " " + " / ".join(names), tt, d_text)
-        elif tag:
-            text = "{} {:.2f}°\n{}".format(tag, tt, d_text)
+        if title and tag == "?*":
+            text = "?* {}\n{:.2f}° · {}".format(title, tt, d_text)
+        elif title:
+            text = "{} {}\n{:.2f}° · {}".format(tag, title, tt, d_text)
+        elif tag == "?" or tag == "":
+            text = "? {:.2f}°\n{}".format(tt, d_text)
         else:
-            text = "{:.2f}°\n{}".format(tt, d_text)
+            text = "{} {:.2f}°\n{}".format(tag, tt, d_text)
         yy = top_y + imax * (0.035 + 0.055 * (k % 3))
         color = _label_color(t, view, i)
         ax.annotate(text, xy=(tt, top_y), xytext=(tt, yy), rotation=90,
@@ -431,10 +477,9 @@ def make(path, theme=DEFAULT_THEME, outdir=None, with_phases=False,
         handles = [Line2D([], [], color=t["bragg"][(no - 1) % len(t["bragg"])],
                           linewidth=2.2, solid_capstyle="butt")
                    for no, _s, _r in bands]
-        legend_labels = ["{} — {}, {} ({})".format(
+        legend_labels = ["{} — {} ({})".format(
             codes[no - 1],
-            result_view.phase_name(score.get("phase"), 32),
-            _formula_pretty((score.get("phase") or {}).get("formula", "")),
+            phase_display(score.get("phase")),
             result_view.confirmation_note(score))
             for no, score, _r in bands]
         leg = fig.legend(handles, legend_labels, loc="lower left",
@@ -448,6 +493,10 @@ def make(path, theme=DEFAULT_THEME, outdir=None, with_phases=False,
                  ha="left", va="bottom", fontsize=7.8, color=t["dim"])
     else:
         ax.set_xlabel("2θ, градусы", color=t["text"], fontsize=11)
+        fig.text(left, 0.012,
+                 "? — фаза для этого пика не определена (совпадения ниже порога); "
+                 "подписи пиков: формула — название минерала",
+                 ha="left", va="bottom", fontsize=7.8, color=t["dim"])
 
     ax.set_ylabel("Интенсивность, имп.", color=t["text"], fontsize=11)
 
